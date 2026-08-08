@@ -1,0 +1,281 @@
+{
+  "companies": [
+    {
+      "id": 1,
+      "name": "MMT ENTERPRISES",
+      "logo": "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?w=150&auto=format&fit=crop&q=80",
+      "gstin": "33AABCU1234F1Z1",
+      "pan": "ABCDE1234F",
+      "email": "info@mmtenterprises.com",
+      "phone": "+91 9876543210",
+      "address": "123, Industrial Estate, Main Highway, Chennai, Tamil Nadu, 600032",
+      "website": "www.mmtenterprises.com",
+      "invoiceFooter": "Thank you for choosing MMT ENTERPRISES! For support call +91 9876543210",
+      "qrCode": "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=mmtenterprises@hdfcbank&pn=MMT%20ENTERPRISES",
+      "bankDetails": "Bank: HDFC Bank | A/c: 50200012345678 | IFSC: HDFC0001234 | Branch: Guindy, Chennai"
+    }
+  ],
+  "branches": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "name": "Chennai HQ",
+      "code": "CHN01",
+      "phone": "+91 44 22334455",
+      "address": "Guindy Industrial Estate, Chennai"
+    },
+    {
+      "id": 2,
+      "companyId": 1,
+      "name": "Coimbatore Branch",
+      "code": "CBE01",
+      "phone": "+91 422 2556677",
+      "address": "Gandhipuram, Coimbatore"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "branchId": 1,
+      "name": "Ananth Krishnan",
+      "username": "admin",
+      "email": "ananth@jcb360infra.com",
+      "password": "admin",
+      "role": "ADMIN",
+      "isActive": true
+    }
+  ],
+  "machines": [],
+  "customers": [],
+  "operators": [],
+  "drivers": [],
+  "bookings": [],
+  "invoices": [],
+  "diesel_records": [],
+  "maintenance_records": [],
+  "accounts": [
+    {
+      "id": 1,
+      "companyId": 1,
+      "name": "Cash Account",
+      "code": "1001",
+      "type": "ASSET",
+      "balance": 0
+    },
+    {
+      "id": 2,
+      "companyId": 1,
+      "name": "HDFC Bank A/c",
+      "code": "1002",
+      "type": "ASSET",
+      "balance": 0
+    },
+    {
+      "id": 3,
+      "companyId": 1,
+      "name": "Sundry Debtors",
+      "code": "1003",
+      "type": "ASSET",
+      "balance": 0
+    },
+    {
+      "id": 4,
+      "companyId": 1,
+      "name": "JCB Machinery Assets",
+      "code": "1004",
+      "type": "ASSET",
+      "balance": 0
+    },
+    {
+      "id": 5,
+      "companyId": 1,
+      "name": "Sundry Creditors",
+      "code": "2001",
+      "type": "LIABILITY",
+      "balance": 0
+    },
+    {
+      "id": 6,
+      "companyId": 1,
+      "name": "Rental Revenues",
+      "code": "3001",
+      "type": "REVENUE",
+      "balance": 0
+    },
+    {
+      "id": 7,
+      "companyId": 1,
+      "name": "Diesel Expenses",
+      "code": "4001",
+      "type": "EXPENSE",
+      "balance": 0
+    },
+    {
+      "id": 8,
+      "companyId": 1,
+      "name": "Maintenance Expenses",
+      "code": "4002",
+      "type": "EXPENSE",
+      "balance": 0
+    },
+    {
+      "id": 9,
+      "companyId": 1,
+      "name": "Staff Wages / Salary",
+      "code": "4003",
+      "type": "EXPENSE",
+      "balance": 0
+    }
+  ],
+  "transactions": [],
+  "spare_parts": [],
+  "suppliers": [],
+  "purchases": [],
+  "expenses": [],
+  "notifications": [],
+  "audit_logs": [],
+  "leads": [],
+  "attendance": [],
+  "salary_slips": [],
+  "role_permissions": [],
+  "whatsapp_templates": [
+    {
+      "id": 1,
+      "name": "Welcome",
+      "type": "Welcome",
+      "body": "Hello {{CustomerName}}, welcome to {{CompanyName}}! We have received your inquiry. Our representative {{ExecutiveName}} will contact you shortly on {{CompanyPhone}}."
+    },
+    {
+      "id": 2,
+      "name": "Quotation",
+      "type": "Quotation",
+      "body": "Hello {{CustomerName}}, here is your quotation {{QuotationNo}} for ₹{{Amount}} from {{CompanyName}}. Please let us know if you have any questions."
+    },
+    {
+      "id": 3,
+      "name": "Booking Confirmation",
+      "type": "Booking Confirmation",
+      "body": "Hi {{CustomerName}}, your booking for {{BookingDate}} has been confirmed by {{CompanyName}}. Thank you!"
+    },
+    {
+      "id": 4,
+      "name": "Invoice",
+      "type": "Invoice",
+      "body": "Dear {{CustomerName}}, Invoice {{InvoiceNo}} of amount ₹{{Amount}} has been generated for your recent booking with {{CompanyName}}. Thank you."
+    },
+    {
+      "id": 5,
+      "name": "Payment Reminder",
+      "type": "Payment Reminder",
+      "body": "Hi {{CustomerName}}, this is a friendly reminder that ₹{{Amount}} is outstanding for invoice {{InvoiceNo}}. Please pay at your earliest convenience."
+    },
+    {
+      "id": 6,
+      "name": "Offer",
+      "type": "Offer",
+      "body": "Special Offer: Hi {{CustomerName}}! Get flat 15% off on JCB rental bookings with {{CompanyName}} this weekend. Reply with 'YES' to book now."
+    },
+    {
+      "id": 7,
+      "name": "Festival",
+      "type": "Festival",
+      "body": "Wishing you a very Happy Festival from all of us at {{CompanyName}}! Hope this brings joy and prosperity."
+    },
+    {
+      "id": 8,
+      "name": "Birthday",
+      "type": "Birthday",
+      "body": "Happy Birthday {{CustomerName}}! Wishing you a wonderful year ahead. From {{CompanyName}}."
+    },
+    {
+      "id": 9,
+      "name": "Maintenance Reminder",
+      "type": "Maintenance Reminder",
+      "body": "Hello, this is a maintenance alert for your machine from {{CompanyName}}. Routine service is scheduled soon."
+    }
+  ],
+  "campaigns": [],
+  "poster_templates": [
+    {
+      "id": 1,
+      "title": "Builder Special Offer",
+      "category": "Builder Offers",
+      "description": "Save 15% on monthly excavator rentals. Premium machines with experienced operators.",
+      "bgColor": "from-amber-600 to-yellow-500",
+      "textColor": "white"
+    },
+    {
+      "id": 2,
+      "title": "Contractor Heavy Machinery Pack",
+      "category": "Contractor Offers",
+      "description": "Full backhoe loader and vibratory roller fleet starting from ₹1,200/hr.",
+      "bgColor": "from-blue-700 to-indigo-500",
+      "textColor": "white"
+    },
+    {
+      "id": 3,
+      "title": "Civil Infrastructure Discounts",
+      "category": "Civil Engineer Offers",
+      "description": "Flexible credit lines and priority scheduling for certified civil projects.",
+      "bgColor": "from-emerald-700 to-teal-500",
+      "textColor": "white"
+    },
+    {
+      "id": 4,
+      "title": "Operator Reward Program",
+      "category": "Operator Offers",
+      "description": "Earn ₹5,000 safety bonus on completed 500 accident-free running hours.",
+      "bgColor": "from-purple-700 to-pink-600",
+      "textColor": "white"
+    },
+    {
+      "id": 5,
+      "title": "Happy Diwali Greetings",
+      "category": "Festival Greetings",
+      "description": "May the light of prosperity illuminate your projects and business ahead.",
+      "bgColor": "from-orange-600 to-red-500",
+      "textColor": "white"
+    },
+    {
+      "id": 6,
+      "title": "Monsoon Rental Discounts",
+      "category": "Rental Offers",
+      "description": "Get 20% flat discount on weekly bookings. Water-proof cabins included.",
+      "bgColor": "from-cyan-700 to-blue-500",
+      "textColor": "white"
+    },
+    {
+      "id": 7,
+      "title": "Precision Track Excavators",
+      "category": "Machine Offers",
+      "description": "Rent the brand new JCB JS205 with bucket volume of 1.02 cubic meters.",
+      "bgColor": "from-zinc-800 to-slate-600",
+      "textColor": "white"
+    },
+    {
+      "id": 8,
+      "title": "Preventive Fleet Maintenance",
+      "category": "Maintenance Offers",
+      "description": "Certified technicians and genuine spare parts service check at your site.",
+      "bgColor": "from-teal-600 to-emerald-500",
+      "textColor": "white"
+    },
+    {
+      "id": 9,
+      "title": "Low-Interest Fleet Financing",
+      "category": "Finance Offers",
+      "description": "Partner bank tie-ups offering up to 90% funding on machine purchases.",
+      "bgColor": "from-rose-600 to-orange-500",
+      "textColor": "white"
+    }
+  ],
+  "campaign_logs": [],
+  "whatsapp_config": {
+    "provider": "meta",
+    "apiKey": "EAAGzDxe...",
+    "phoneNumberId": "1058229...",
+    "wabaId": "1049280...",
+    "status": "CONNECTED"
+  }
+}

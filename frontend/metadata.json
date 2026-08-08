@@ -1,0 +1,6 @@
+{
+  "name": "JCB360 - JCB Management & Billing Software",
+  "description": "Production-ready enterprise JCB management, booking, billing, diesel tracking, maintenance, and accounting ERP.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

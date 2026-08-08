@@ -1,0 +1,377 @@
+// JCB360 Prisma Schema - Production Ready Enterprise ERP
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id                  Int                  @id @default(autoincrement())
+  name                String               @db.VarChar(150)
+  gstin               String?              @db.VarChar(15)
+  email               String?              @db.VarChar(100)
+  phone               String?              @db.VarChar(20)
+  address             String?              @db.Text
+  logoUrl             String?              @db.VarChar(255)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  branches            Branch[]
+  users               User[]
+  machines            Machine[]
+  customers           Customer[]
+  operators           Operator[]
+  drivers             Driver[]
+  bookings            Booking[]
+  invoices            Invoice[]
+  dieselRecords       DieselRecord[]
+  maintenanceRecords  MaintenanceRecord[]
+  accounts            Account[]
+  transactions        Transaction[]
+  auditLogs           AuditLog[]
+
+  @@map("companies")
+}
+
+model Branch {
+  id                  Int                  @id @default(autoincrement())
+  companyId           Int
+  name                String               @db.VarChar(100)
+  code                String               @unique @db.VarChar(20)
+  phone               String?              @db.VarChar(20)
+  address             String?              @db.Text
+  createdAt           DateTime             @default(now())
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users               User[]
+  machines            Machine[]
+  operators           Operator[]
+  drivers             Driver[]
+  bookings            Booking[]
+  invoices            Invoice[]
+  dieselRecords       DieselRecord[]
+  maintenanceRecords  MaintenanceRecord[]
+  transactions        Transaction[]
+
+  @@map("branches")
+}
+
+model User {
+  id          Int        @id @default(autoincrement())
+  companyId   Int
+  branchId    Int
+  name        String     @db.VarChar(100)
+  username    String     @unique @db.VarChar(50)
+  email       String     @unique @db.VarChar(100)
+  password    String     @db.VarChar(255) @map("password_hash")
+  role        UserRole   @default(MANAGER)
+  isActive    Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  company     Company    @relation(fields: [companyId], references: [id])
+  branch      Branch     @relation(fields: [branchId], references: [id])
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  ACCOUNTANT
+  OPERATOR
+}
+
+model Machine {
+  id                  Int                 @id @default(autoincrement())
+  companyId           Int
+  branchId            Int
+  modelName           String              @db.VarChar(100)
+  plateNumber         String              @unique @db.VarChar(30)
+  hourlyRate          Decimal             @db.Decimal(10, 2)
+  dailyRate           Decimal             @db.Decimal(10, 2)
+  weeklyRate          Decimal             @db.Decimal(10, 2)
+  monthlyRate         Decimal             @db.Decimal(10, 2)
+  chassisNumber       String?             @db.VarChar(100)
+  engineNumber        String?             @db.VarChar(100)
+  status              MachineStatus       @default(AVAILABLE)
+  purchaseDate        DateTime?
+  lastServiceDate     DateTime?
+  nextServiceDueHours Int                 @default(250)
+  currentHours        Int                 @default(0)
+  createdAt           DateTime            @default(now())
+  company             Company             @relation(fields: [companyId], references: [id])
+  branch              Branch              @relation(fields: [branchId], references: [id])
+  bookings            Booking[]
+  dieselRecords       DieselRecord[]
+  maintenanceRecords  MaintenanceRecord[]
+
+  @@map("machines")
+}
+
+enum MachineStatus {
+  AVAILABLE
+  RUNNING
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+model Customer {
+  id                 Int       @id @default(autoincrement())
+  companyId          Int
+  name               String    @db.VarChar(150)
+  gstin              String?   @db.VarChar(15)
+  email              String?   @db.VarChar(100)
+  phone              String    @db.VarChar(20)
+  billingAddress     String?   @db.Text
+  outstandingBalance Decimal   @default(0.00) @db.Decimal(12, 2)
+  creditLimit        Decimal   @default(100000.00) @db.Decimal(12, 2)
+  createdAt          DateTime  @default(now())
+  company            Company   @relation(fields: [companyId], references: [id])
+  bookings           Booking[]
+  invoices           Invoice[]
+
+  @@map("customers")
+}
+
+model Operator {
+  id            Int            @id @default(autoincrement())
+  companyId     Int
+  branchId      Int
+  name          String         @db.VarChar(100)
+  licenseNumber String         @unique @db.VarChar(50)
+  phone         String         @db.VarChar(20)
+  salaryType    SalaryType     @default(MONTHLY)
+  salaryRate    Decimal        @default(0.00) @db.Decimal(10, 2)
+  status        EmployeeStatus @default(AVAILABLE)
+  createdAt     DateTime       @default(now())
+  company       Company        @relation(fields: [companyId], references: [id])
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  bookings      Booking[]
+  dieselRecords DieselRecord[]
+
+  @@map("operators")
+}
+
+model Driver {
+  id            Int            @id @default(autoincrement())
+  companyId     Int
+  branchId      Int
+  name          String         @db.VarChar(100)
+  licenseNumber String         @unique @db.VarChar(50)
+  phone         String         @db.VarChar(20)
+  status        EmployeeStatus @default(AVAILABLE)
+  createdAt     DateTime       @default(now())
+  company       Company        @relation(fields: [companyId], references: [id])
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  bookings      Booking[]
+
+  @@map("drivers")
+}
+
+enum SalaryType {
+  MONTHLY
+  DAILY
+}
+
+enum EmployeeStatus {
+  AVAILABLE
+  ON_DUTY
+  ON_LEAVE
+}
+
+model Booking {
+  id          Int           @id @default(autoincrement())
+  companyId   Int
+  branchId    Int
+  customerId  Int
+  machineId   Int
+  operatorId  Int
+  driverId    Int?
+  startDate   DateTime
+  endDate     DateTime?
+  startHours  Int
+  endHours    Int?
+  billingType BillingType
+  billingRate Decimal       @db.Decimal(10, 2)
+  siteLocation String       @db.VarChar(255)
+  status      BookingStatus @default(PENDING)
+  createdAt   DateTime      @default(now())
+  company     Company       @relation(fields: [companyId], references: [id])
+  branch      Branch        @relation(fields: [branchId], references: [id])
+  customer    Customer      @relation(fields: [customerId], references: [id])
+  machine     Machine       @relation(fields: [machineId], references: [id])
+  operator    Operator      @relation(fields: [operatorId], references: [id])
+  driver      Driver?       @relation(fields: [driverId], references: [id])
+  invoices    Invoice[]
+
+  @@map("bookings")
+}
+
+enum BillingType {
+  HOURLY
+  DAILY
+  WEEKLY
+  MONTHLY
+  CONTRACT
+}
+
+enum BookingStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Invoice {
+  id                Int           @id @default(autoincrement())
+  companyId         Int
+  branchId          Int
+  bookingId         Int
+  customerId        Int
+  invoiceNumber     String        @unique @db.VarChar(50)
+  invoiceDate       DateTime
+  dueDate           DateTime
+  subtotal          Decimal       @db.Decimal(12, 2)
+  cgstRate          Decimal       @default(9.00) @db.Decimal(5, 2)
+  sgstRate          Decimal       @default(9.00) @db.Decimal(5, 2)
+  igstRate          Decimal       @default(0.00) @db.Decimal(5, 2)
+  cgstAmount        Decimal       @default(0.00) @db.Decimal(12, 2)
+  sgstAmount        Decimal       @default(0.00) @db.Decimal(12, 2)
+  igstAmount        Decimal       @default(0.00) @db.Decimal(12, 2)
+  totalTax          Decimal       @db.Decimal(12, 2)
+  grandTotal        Decimal       @db.Decimal(12, 2)
+  paidAmount        Decimal       @default(0.00) @db.Decimal(12, 2)
+  outstandingAmount Decimal       @db.Decimal(12, 2)
+  status            InvoiceStatus @default(UNPAID)
+  qrCodeData        String?       @db.Text
+  createdAt         DateTime      @default(now())
+  company           Company       @relation(fields: [companyId], references: [id])
+  branch            Branch        @relation(fields: [branchId], references: [id])
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+  customer          Customer      @relation(fields: [customerId], references: [id])
+
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  VOID
+}
+
+model DieselRecord {
+  id             Int      @id @default(autoincrement())
+  companyId      Int
+  branchId       Int
+  machineId      Int
+  operatorId     Int
+  fillDate       DateTime
+  quantityLiters Decimal  @db.Decimal(8, 2)
+  ratePerLiter   Decimal  @db.Decimal(8, 2)
+  totalCost      Decimal  @db.Decimal(10, 2)
+  currentHours   Int
+  vendorName     String?  @db.VarChar(100)
+  slipNumber     String?  @db.VarChar(50)
+  createdAt      DateTime @default(now())
+  company        Company  @relation(fields: [companyId], references: [id])
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  machine        Machine  @relation(fields: [machineId], references: [id])
+  operator       Operator @relation(fields: [operatorId], references: [id])
+
+  @@map("diesel_records")
+}
+
+model MaintenanceRecord {
+  id             Int      @id @default(autoincrement())
+  companyId      Int
+  branchId       Int
+  machineId      Int
+  serviceType    String   @db.VarChar(100)
+  serviceDate    DateTime
+  serviceHours   Int
+  cost           Decimal  @db.Decimal(10, 2)
+  description    String?  @db.Text
+  technicianName String?  @db.VarChar(100)
+  partsReplaced  String?  @db.Text
+  nextDueHours   Int?
+  createdAt      DateTime @default(now())
+  company        Company  @relation(fields: [companyId], references: [id])
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  machine        Machine  @relation(fields: [machineId], references: [id])
+
+  @@map("maintenance_records")
+}
+
+model Account {
+  id        Int          @id @default(autoincrement())
+  companyId Int
+  name      String       @db.VarChar(100)
+  code      String       @unique @db.VarChar(20)
+  type      AccountType
+  balance   Decimal      @default(0.00) @db.Decimal(14, 2)
+  createdAt DateTime     @default(now())
+  company   Company      @relation(fields: [companyId], references: [id])
+  lines     TransactionLine[]
+
+  @@map("accounts")
+}
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+model Transaction {
+  id              Int               @id @default(autoincrement())
+  companyId       Int
+  branchId        Int
+  transactionDate DateTime
+  referenceNumber String?           @db.VarChar(50)
+  description     String?           @db.Text
+  type            TransactionType
+  createdAt       DateTime          @default(now())
+  company         Company           @relation(fields: [companyId], references: [id])
+  branch          Branch            @relation(fields: [branchId], references: [id])
+  lines           TransactionLine[]
+
+  @@map("transactions")
+}
+
+enum TransactionType {
+  RECEIPT
+  PAYMENT
+  JOURNAL
+  CONTRA
+}
+
+model TransactionLine {
+  id            Int         @id @default(autoincrement())
+  transactionId Int
+  accountId     Int
+  debit         Decimal     @default(0.00) @db.Decimal(14, 2)
+  credit        Decimal     @default(0.00) @db.Decimal(14, 2)
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  account       Account     @relation(fields: [accountId], references: [id])
+
+  @@map("transaction_lines")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  companyId Int
+  userId    Int
+  action    String   @db.VarChar(100)
+  details   String?  @db.Text
+  ipAddress String?  @db.VarChar(45)
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
