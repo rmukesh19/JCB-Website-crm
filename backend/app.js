@@ -1,24 +1,14 @@
-import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import dotenv from 'dotenv';
 import path from 'path';
-import { fileURLToPath } from 'url';
-import connectDB from './config/database.js';
 import apiRoutes from './routes/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-
+dotenv.config();
 
 const app = express();
-
-// Connect Mongoose
-connectDB();
 
 // Middlewares
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -28,7 +18,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
 
 // Static uploads route
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'backend', 'uploads')));
 
 // Health Check
 app.get('/api/health', (req, res) => {

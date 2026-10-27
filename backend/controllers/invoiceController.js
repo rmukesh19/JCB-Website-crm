@@ -1,169 +1,157 @@
 import Invoice from '../models/Invoice.js';
-import Customer from '../models/Customer.js';
-import logAudit from '../services/auditService.js';
-import triggerWhatsAppAutomation from '../services/whatsappService.js';
-import { isDbConnected, memoryStore } from '../services/memoryStore.js';
+import Transaction from '../models/Transaction.js';
 
-// Bug 1 Fix: Always merge DB invoices + memoryStore invoices so auto-generated
-// invoices from booking completion (saved to DB) and in-memory ones are both visible.
+const getNextId = async (Model) => {
+  const last = await Model.findOne().sort({ id: -1 }).select('id');
+  return (last && typeof last.id === 'number') ? last.id + 1 : 1;
+};
+
+const findInvoiceById = (id) => {
+  if (id && String(id).length === 24) {
+    return Invoice.findOne({ $or: [{ _id: id }, { id: Number(id) || -1 }] });
+  }
+  const num = Number(id);
+  if (!isNaN(num)) {
+    return Invoice.findOne({ $or: [{ id: num }, { _id: id }] });
+  }
+  return Invoice.findOne({ _id: id });
+};
+
+const formatInvoice = (inv) => {
+  const obj = inv.toObject ? inv.toObject() : inv;
+  const dateStr = obj.invoiceDate || obj.date || new Date().toISOString().split('T')[0];
+  const sub = Number(obj.subtotal !== undefined ? obj.subtotal : (obj.subTotal || obj.amount || 0));
+  const tot = Number(obj.grandTotal !== undefined ? obj.grandTotal : (obj.totalAmount || sub));
+  const paid = Number(obj.paidAmount !== undefined ? obj.paidAmount : (obj.receivedAmount || 0));
+  const balance = Number(obj.outstandingAmount !== undefined ? obj.outstandingAmount : (obj.balanceAmount !== undefined ? obj.balanceAmount : Math.max(0, tot - paid)));
+
+  return {
+    ...obj,
+    id: obj.id || obj._id,
+    date: dateStr,
+    invoiceDate: dateStr,
+    subtotal: sub,
+    subTotal: sub,
+    grandTotal: tot,
+    totalAmount: tot,
+    paidAmount: paid,
+    receivedAmount: paid,
+    outstandingAmount: balance,
+    balanceAmount: balance,
+    status: balance <= 0 ? 'PAID' : (paid > 0 ? 'PARTIAL' : 'ISSUED')
+  };
+};
+
 export const getInvoices = async (req, res) => {
   try {
-    const companyId = req.currentUser?.companyId || 1;
-    let dbInvoices = [];
-    if (isDbConnected()) {
-      try {
-        dbInvoices = await Invoice.find({ companyId });
-      } catch (dbErr) {
-        console.warn('getInvoices DB fallback:', dbErr.message);
-      }
-    }
-    // Merge: DB invoices take priority, append memoryStore ones not already in DB
-    const dbIds = new Set(dbInvoices.map(i => i.id));
-    const memInvoices = memoryStore.invoices.filter(i => !dbIds.has(i.id));
-    return res.json([...dbInvoices, ...memInvoices]);
+    const invoices = await Invoice.find().sort({ id: -1 });
+    res.json(invoices.map(formatInvoice));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching invoices:', err);
+    res.status(500).json({ error: 'Failed to fetch invoices', details: err.message });
   }
 };
 
-// Bug 2 Fix: Add standalone invoice creation endpoint (POST /api/invoices)
+export const getInvoiceById = async (req, res) => {
+  try {
+    const item = await findInvoiceById(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Invoice not found' });
+    res.json(formatInvoice(item));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch invoice', details: err.message });
+  }
+};
+
 export const createInvoice = async (req, res) => {
   try {
-    const companyId = req.currentUser?.companyId || 1;
-    const branchId = req.currentUser?.branchId || 1;
+    const nextId = await getNextId(Invoice);
+    const count = await Invoice.countDocuments();
+    const subTotal = Number(req.body.subTotal || req.body.subtotal || req.body.amount || 0);
+    const gstRate = Number(req.body.gstRate || 18);
+    const gstAmount = Number(req.body.gstAmount || (subTotal * gstRate) / 100);
+    const totalAmount = Number(req.body.totalAmount || req.body.grandTotal || (subTotal + gstAmount));
+    const receivedAmount = Number(req.body.receivedAmount || req.body.paidAmount || 0);
+    const balanceAmount = totalAmount - receivedAmount;
+    const dateStr = req.body.invoiceDate || req.body.date || new Date().toISOString().split('T')[0];
 
-    let newInvoice = null;
+    const newInv = formatInvoice({
+      ...req.body,
+      id: nextId,
+      invoiceNumber: req.body.invoiceNumber || `INV-2026-${String(count + 43).padStart(4, '0')}`,
+      companyId: req.body.companyId || req.currentUser?.companyId || 1,
+      branchId: req.body.branchId || req.currentUser?.branchId || 1,
+      date: dateStr,
+      invoiceDate: dateStr,
+      subTotal,
+      subtotal: subTotal,
+      gstRate,
+      gstAmount,
+      totalAmount,
+      grandTotal: totalAmount,
+      receivedAmount,
+      paidAmount: receivedAmount,
+      balanceAmount,
+      outstandingAmount: balanceAmount,
+      status: balanceAmount <= 0 ? 'PAID' : (receivedAmount > 0 ? 'PARTIAL' : 'ISSUED')
+    });
 
-    if (isDbConnected()) {
-      try {
-        const count = await Invoice.countDocuments();
-        const id = count + memoryStore.invoices.length + 1;
-        const invoiceNumber = req.body.invoiceNumber ||
-          `INV-${new Date().getFullYear()}-${String(id).padStart(4, '0')}`;
-
-        newInvoice = new Invoice({
-          id,
-          companyId,
-          branchId,
-          invoiceNumber,
-          invoiceDate: req.body.invoiceDate || new Date().toISOString().split('T')[0],
-          ...req.body,
-          companyId,
-          branchId
-        });
-        await newInvoice.save();
-      } catch (dbErr) {
-        console.warn('createInvoice DB fallback:', dbErr.message);
-      }
-    }
-
-    if (!newInvoice) {
-      const id = memoryStore.invoices.length + 1;
-      const invoiceNumber = req.body.invoiceNumber ||
-        `INV-${new Date().getFullYear()}-${String(id).padStart(4, '0')}`;
-      newInvoice = {
-        id,
-        companyId,
-        branchId,
-        invoiceNumber,
-        invoiceDate: req.body.invoiceDate || new Date().toISOString().split('T')[0],
-        paidAmount: 0,
-        outstandingAmount: req.body.grandTotal || req.body.totalAmount || 0,
-        status: 'UNPAID',
-        ...req.body,
-        companyId,
-        branchId
-      };
-      memoryStore.invoices.push(newInvoice);
-    }
-
-    // Update customer outstanding balance
-    const customerId = req.body.customerId;
-    if (customerId) {
-      const grandTotal = req.body.grandTotal || req.body.totalAmount || 0;
-      if (isDbConnected()) {
-        try {
-          await Customer.findOneAndUpdate(
-            { id: customerId },
-            { $inc: { outstandingBalance: grandTotal } }
-          );
-        } catch (_) {}
-      } else {
-        const c = memoryStore.customers.find(x => x.id === customerId);
-        if (c) c.outstandingBalance = (c.outstandingBalance || 0) + grandTotal;
-      }
-    }
-
-    await logAudit(
-      companyId,
-      req.currentUser?.id,
-      req.currentUser?.name,
-      'CREATE_INVOICE',
-      `Invoice ${newInvoice.invoiceNumber || newInvoice.id} created`
-    );
-    return res.json(newInvoice);
+    const created = await Invoice.create(newInv);
+    res.status(201).json(formatInvoice(created));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error creating invoice:', err);
+    res.status(500).json({ error: 'Failed to create invoice', details: err.message });
   }
 };
 
-export const receivePayment = async (req, res) => {
+export const updateInvoice = async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    const { amount, paymentMode } = req.body;
-    const payAmt = parseFloat(amount || 0);
+    const item = await findInvoiceById(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Invoice not found' });
 
-    let inv = null;
-    let customer = null;
+    const formatted = formatInvoice({ ...item.toObject(), ...req.body });
+    Object.assign(item, formatted);
+    await item.save();
 
-    if (isDbConnected()) {
-      try {
-        inv = await Invoice.findOne({ id });
-        if (inv) {
-          inv.paidAmount = (inv.paidAmount || 0) + payAmt;
-          inv.outstandingAmount = Math.max(0, inv.grandTotal - inv.paidAmount);
-          inv.status = inv.outstandingAmount === 0 ? 'PAID' : 'PARTIALLY_PAID';
-          await inv.save();
+    res.json(formatInvoice(item));
+  } catch (err) {
+    console.error('Error updating invoice:', err);
+    res.status(500).json({ error: 'Failed to update invoice', details: err.message });
+  }
+};
 
-          customer = await Customer.findOne({ id: inv.customerId });
-          if (customer) {
-            customer.outstandingBalance = Math.max(0, (customer.outstandingBalance || 0) - payAmt);
-            await customer.save();
-          }
-        }
-      } catch (dbErr) {
-        console.warn('receivePayment DB fallback:', dbErr.message);
-      }
-    }
-
-    if (!inv) {
-      inv = memoryStore.invoices.find(i => i.id === id);
-      if (inv) {
-        inv.paidAmount = (inv.paidAmount || 0) + payAmt;
-        inv.outstandingAmount = Math.max(0, inv.grandTotal - inv.paidAmount);
-        inv.status = inv.outstandingAmount === 0 ? 'PAID' : 'PARTIALLY_PAID';
-
-        customer = memoryStore.customers.find(c => c.id === inv.customerId);
-        if (customer) {
-          customer.outstandingBalance = Math.max(0, (customer.outstandingBalance || 0) - payAmt);
-        }
-      }
-    }
-
+export const recordPayment = async (req, res) => {
+  try {
+    const inv = await findInvoiceById(req.params.id);
     if (!inv) return res.status(404).json({ error: 'Invoice not found' });
 
-    if (customer) {
-      triggerWhatsAppAutomation(req.currentUser?.companyId, 'Payment Reminder', {
-        customerName: customer.name,
-        whatsAppNumber: customer.whatsApp || customer.mobile,
-        invoiceNo: inv.invoiceNumber,
-        amount: payAmt
-      });
-    }
+    const paymentAmount = Number(req.body.amount || 0);
+    inv.receivedAmount = (Number(inv.receivedAmount) || 0) + paymentAmount;
+    inv.paidAmount = inv.receivedAmount;
+    inv.balanceAmount = Math.max(0, (Number(inv.totalAmount) || 0) - inv.receivedAmount);
+    inv.outstandingAmount = inv.balanceAmount;
+    inv.status = inv.balanceAmount === 0 ? 'PAID' : 'PARTIAL';
+    await inv.save();
 
-    await logAudit(req.currentUser?.companyId, req.currentUser?.id, req.currentUser?.name, 'PAYMENT_RECEIVE', `Received payment ${payAmt} against ${inv.invoiceNumber}`);
-    return res.json({ success: true, invoice: inv });
+    // Record ledger transaction in Mongoose
+    const txId = await getNextId(Transaction);
+    const txCount = await Transaction.countDocuments();
+    const newTx = await Transaction.create({
+      id: txId,
+      voucherNumber: `VCH-2026-${String(txCount + 131).padStart(4, '0')}`,
+      companyId: inv.companyId,
+      date: new Date().toISOString().split('T')[0],
+      type: 'RECEIPT',
+      accountId: 1,
+      accountName: 'HDFC Current Account',
+      amount: paymentAmount,
+      party: inv.customerName || 'Customer',
+      particulars: `Payment for Tax Invoice #${inv.invoiceNumber} (Ref: ${req.body.referenceNumber || 'Cash/UPI'})`,
+      paymentMode: req.body.paymentMode || 'BANK'
+    });
+
+    res.json({ success: true, invoice: formatInvoice(inv), transaction: newTx });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error recording payment:', err);
+    res.status(500).json({ error: 'Failed to record payment', details: err.message });
   }
 };

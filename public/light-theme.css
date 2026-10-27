@@ -1,0 +1,817 @@
+/*
+ * JCB360 Light Theme Override — v4 (final)
+ * Fixes: correct attribute selectors, all opacity variants, gradient overrides.
+ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   1. CSS Variable Remapping
+   ═══════════════════════════════════════════════════════════════════ */
+:root, :host {
+  --color-slate-950: #f8fafc;
+  --color-slate-900: #f1f5f9;
+  --color-slate-850: #e8f5e9;
+  --color-slate-800: #ffffff;
+  --color-slate-750: #d1fae5;
+  --color-slate-700: #cbd5e1;
+  --color-slate-600: #64748b;
+  --color-black:     #f0fdf4;
+  --color-zinc-800:  #e2e8f0;
+  --color-white:     #ffffff;
+  --color-gray-800:  #e2e8f0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   2. Base
+   ═══════════════════════════════════════════════════════════════════ */
+html { background-color: #edfaf2 !important; }
+body { background-color: #edfaf2 !important; color: #0f2318 !important; }
+#root { background-color: #edfaf2 !important; min-height: 100vh; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   3. Dark Background Overrides — ALL opacity variants
+   NOTE: In [class*="..."] selectors, no escaping needed inside quotes.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* bg-[#0f172a] and all /XX variants */
+[class*="bg-[#0f172a]"] { background-color: #f0fdf4 !important; }
+
+/* bg-[#1e293b] and all /XX variants */
+[class*="bg-[#1e293b]"] { background-color: #ffffff !important; }
+
+/* bg-slate-900 and all /XX variants */
+[class*="bg-slate-900"] { background-color: #f0fdf4 !important; }
+
+/* bg-slate-800 and all /XX variants */
+[class*="bg-slate-800"] { background-color: #ffffff !important; }
+
+/* Hover variants */
+[class*="hover:bg-[#0f172a]"]:hover { background-color: #dcfce7 !important; }
+[class*="hover:bg-[#1e293b]"]:hover { background-color: #dcfce7 !important; }
+[class*="hover:bg-slate-800"]:hover { background-color: #dcfce7 !important; }
+[class*="hover:bg-slate-900"]:hover { background-color: #f0fdf4 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   4. Gradient Backgrounds — Override dark from/to stops
+   ═══════════════════════════════════════════════════════════════════ */
+/* All gradient elements that use dark stops */
+[class*="from-zinc-8"],
+[class*="from-slate-8"],
+[class*="from-slate-9"],
+[class*="from-gray-8"] {
+  --tw-gradient-from: #f0fdf4 !important;
+  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position),
+    var(--tw-gradient-from) var(--tw-gradient-from-position),
+    var(--tw-gradient-to) var(--tw-gradient-to-position)) !important;
+}
+[class*="to-zinc-8"],
+[class*="to-slate-8"],
+[class*="to-slate-9"],
+[class*="to-slate-6"],
+[class*="to-gray-8"] {
+  --tw-gradient-to: #dcfce7 !important;
+}
+
+/* Catch all gradient-to-r/tr that use dark theme */
+.bg-gradient-to-r,
+.bg-gradient-to-tr {
+  /* If no light from/to classes — reset to none to avoid dark gradient */
+  background-image: none !important;
+  background-color: #ffffff !important;
+}
+/* But restore gradient for actual colored elements (non-dark) */
+[class*="from-emerald"],
+[class*="from-blue"],
+[class*="from-indigo"],
+[class*="from-rose"],
+[class*="from-amber"],
+[class*="from-cyan"],
+[class*="from-purple"],
+[class*="from-orange"],
+[class*="from-sky"],
+[class*="from-teal"] {
+  background-image: linear-gradient(var(--tw-gradient-stops)) !important;
+  background-color: transparent !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   5. Inline Style Overrides (React sets these directly)
+   ═══════════════════════════════════════════════════════════════════ */
+[style*="background-color: rgb(15, 23, 42)"],
+[style*="background-color: #0f172a"],
+[style*="background: rgb(15, 23, 42)"],
+[style*="background: #0f172a"]           { background-color: #f0fdf4 !important; background: #f0fdf4 !important; }
+
+[style*="background-color: rgb(30, 41, 59)"],
+[style*="background-color: #1e293b"],
+[style*="background: rgb(30, 41, 59)"],
+[style*="background: #1e293b"]           { background-color: #ffffff !important; background: #ffffff !important; }
+
+[style*="background-color: rgb(12, 18, 34)"],
+[style*="background-color: rgb(10, 15, 30)"],
+[style*="background-color: rgb(17, 24, 39)"],
+[style*="background-color: rgb(15, 20, 40)"] { background-color: #f0fdf4 !important; background: #f0fdf4 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   6. Layout — Sidebar + Main Content Wrappers
+   ═══════════════════════════════════════════════════════════════════ */
+#root > div            { background-color: #edfaf2 !important; }
+#root > div > div      { background-color: #edfaf2 !important; }
+
+/* Sidebar */
+#root > div > div:first-child,
+#root > div > aside {
+  background-color: #f0fdf4 !important;
+  border-right: 1px solid #bbf7d0 !important;
+}
+
+/* Main Content Area */
+#root > div > div:last-child,
+#root > div > main { background-color: #edfaf2 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   7. ★ CARDS — Gradient bg + Shadow
+   ═══════════════════════════════════════════════════════════════════ */
+/* All white cards */
+.bg-white {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fffe 100%) !important;
+  box-shadow: 0 2px 12px rgba(22,163,74,0.08), 0 1px 3px rgba(0,0,0,0.04) !important;
+  border: 1px solid #d1fae5 !important;
+}
+
+/* Cards that were dark (now forced light via section 3) — enhance them */
+[class*="bg-slate-800"],
+[class*="bg-slate-900"],
+[class*="bg-[#0f172a]"],
+[class*="bg-[#1e293b]"] {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fffe 100%) !important;
+  box-shadow: 0 2px 12px rgba(22,163,74,0.08), 0 1px 3px rgba(0,0,0,0.04) !important;
+  border: 1px solid #d1fae5 !important;
+  color: #0f2318 !important;
+}
+
+/* Ensure card children text is dark */
+[class*="bg-slate-800"] *,
+[class*="bg-slate-900"] *,
+[class*="bg-[#0f172a]"] *,
+[class*="bg-[#1e293b]"] * { color: inherit; }
+
+/* Panel/Section wrappers that are big containers */
+.min-h-screen { background-color: #edfaf2 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   8. ★ TEXT — Full Visibility Fix
+   ═══════════════════════════════════════════════════════════════════ */
+/* Slate (was light on dark bg — now make dark on light bg) */
+.text-slate-100 { color: #0f2318 !important; }
+.text-slate-200 { color: #1a3326 !important; }
+.text-slate-300 { color: #1e4d35 !important; }
+.text-slate-400 { color: #374151 !important; }
+.text-slate-500 { color: #4b5563 !important; }
+.text-slate-600 { color: #374151 !important; }
+.text-white     { color: #0f2318 !important; }
+
+/* Cyan — readable dark version */
+.text-cyan-300, .text-cyan-400, .text-cyan-500, .text-cyan-700 { color: #0e7490 !important; }
+
+/* Sky */
+.text-sky-300, .text-sky-400, .text-sky-500 { color: #0369a1 !important; }
+
+/* Teal */
+.text-teal-300, .text-teal-400, .text-teal-500, .text-teal-600 { color: #0f766e !important; }
+
+/* Blue */
+.text-blue-300, .text-blue-400, .text-blue-500 { color: #1d4ed8 !important; }
+
+/* Indigo */
+.text-indigo-300, .text-indigo-400, .text-indigo-500 { color: #4338ca !important; }
+
+/* Purple */
+.text-purple-300, .text-purple-400, .text-purple-500 { color: #7c3aed !important; }
+
+/* Amber / Orange */
+.text-amber-300, .text-amber-400 { color: #b45309 !important; }
+.text-amber-500                   { color: #92400e !important; }
+.text-orange-400, .text-orange-500 { color: #c2410c !important; }
+.text-yellow-300, .text-yellow-500 { color: #854d0e !important; }
+
+/* Rose / Red */
+.text-rose-300, .text-rose-400 { color: #be123c !important; }
+.text-rose-500                  { color: #9f1239 !important; }
+
+/* Emerald / Green */
+.text-emerald-300, .text-emerald-400 { color: #059669 !important; }
+.text-emerald-500                     { color: #047857 !important; }
+.text-emerald-600                     { color: #065f46 !important; }
+
+/* Gray */
+.text-gray-100, .text-gray-200 { color: #111827 !important; }
+.text-gray-300                  { color: #1f2937 !important; }
+.text-gray-400                  { color: #374151 !important; }
+.text-gray-500                  { color: #4b5563 !important; }
+
+/* Hover */
+[class*="hover:text-slate-1"]:hover,
+[class*="hover:text-white"]:hover     { color: #15803d !important; }
+[class*="hover:text-cyan"]:hover,
+[class*="hover:text-sky"]:hover       { color: #0e7490 !important; }
+
+/* BUT: keep white text on colored button/badge backgrounds */
+.bg-emerald-400 .text-white,
+.bg-emerald-500 .text-white,
+.bg-emerald-600 .text-white,
+.bg-blue-500 .text-white,
+.bg-blue-600 .text-white,
+.bg-emerald-400,
+.bg-emerald-500,
+.bg-emerald-600,
+.bg-blue-500,
+.bg-blue-600,
+.bg-indigo-500,
+.bg-indigo-600,
+.bg-rose-500,
+.bg-rose-600,
+.bg-amber-500 { color: #ffffff !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   9. Borders — Light Green
+   ═══════════════════════════════════════════════════════════════════ */
+[class*="border-[#334155]"]  { border-color: #bbf7d0 !important; }
+[class*="border-slate-800"]  { border-color: #bbf7d0 !important; }
+[class*="border-slate-700"]  { border-color: #a7f3d0 !important; }
+[class*="border-slate-750"]  { border-color: #d1fae5 !important; }
+[class*="border-slate-600"]  { border-color: #6ee7b7 !important; }
+
+:where([class*="divide-slate-8"] > :not(:last-child)) { border-color: #bbf7d0 !important; }
+:where([class*="divide-[#33"] > :not(:last-child))    { border-color: #bbf7d0 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   10. ★ BUTTONS — Vivid Green
+   ═══════════════════════════════════════════════════════════════════ */
+/* Blue → Green */
+.bg-blue-500, .bg-blue-600,
+.bg-indigo-500, .bg-indigo-600 {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  color: #ffffff !important;
+  border-color: #15803d !important;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.30) !important;
+}
+[class*="hover:bg-blue-"]:hover,
+[class*="hover:bg-indigo-"]:hover {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Emerald — enhanced */
+.bg-emerald-400 {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.30) !important;
+}
+.bg-emerald-500 {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.30) !important;
+}
+.bg-emerald-600 {
+  background: linear-gradient(135deg, #15803d 0%, #166534 100%) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(22,163,74,0.25) !important;
+}
+
+/* Teal → Green */
+.bg-teal-600 {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  color: #ffffff !important;
+}
+
+/* Active nav — green */
+[class*="bg-emerald"][class*="text-white"],
+[class*="bg-green"] {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+  color: #ffffff !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   11. Nav / Sidebar Text
+   ═══════════════════════════════════════════════════════════════════ */
+nav a, nav button,
+aside a, aside button { color: #1a3326 !important; }
+nav a:hover, nav button:hover,
+aside a:hover, aside button:hover {
+  color: #15803d !important;
+  background-color: #dcfce7 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   12. Inputs / Forms
+   ═══════════════════════════════════════════════════════════════════ */
+input, textarea, select {
+  background-color: #ffffff !important;
+  border-color: #bbf7d0 !important;
+  color: #0f2318 !important;
+}
+input::placeholder, textarea::placeholder { color: #9ca3af !important; }
+input:focus, textarea:focus, select:focus {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.15) !important;
+  outline: none !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   13. Dropdowns / Modals
+   ═══════════════════════════════════════════════════════════════════ */
+[role="listbox"],
+[role="menu"],
+[class*="dropdown"],
+[class*="popover"] {
+  background-color: #ffffff !important;
+  border-color: #bbf7d0 !important;
+  box-shadow: 0 8px 32px rgba(22,163,74,0.12) !important;
+}
+
+.fixed.inset-0 { background-color: rgba(0,0,0,0.35) !important; }
+
+[role="dialog"] > div,
+.fixed.inset-0 > div {
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%) !important;
+  border-color: #bbf7d0 !important;
+  box-shadow: 0 20px 60px rgba(22,163,74,0.15) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   14. ★ TABLES
+   ═══════════════════════════════════════════════════════════════════ */
+table { background-color: #ffffff !important; color: #0f2318 !important; }
+thead {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%) !important;
+}
+th {
+  color: #166534 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.05em !important;
+}
+td { color: #1a3326 !important; }
+tr { border-bottom-color: #d1fae5 !important; }
+tbody tr:hover { background-color: #f0fdf4 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   15. Badge backgrounds with /10 opacity — fix text color
+   ═══════════════════════════════════════════════════════════════════ */
+[class*="bg-emerald"][class*="/10"] { color: #065f46 !important; }
+[class*="bg-blue"][class*="/10"]    { color: #1e40af !important; }
+[class*="bg-rose"][class*="/10"]    { color: #9f1239 !important; }
+[class*="bg-amber"][class*="/10"]   { color: #78350f !important; }
+[class*="bg-purple"][class*="/10"]  { color: #5b21b6 !important; }
+[class*="bg-cyan"][class*="/10"]    { color: #0e7490 !important; }
+[class*="bg-orange"][class*="/10"]  { color: #9a3412 !important; }
+[class*="bg-sky"][class*="/10"]     { color: #075985 !important; }
+[class*="bg-teal"][class*="/10"]    { color: #0f766e !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   16. Scrollbars
+   ═══════════════════════════════════════════════════════════════════ */
+::-webkit-scrollbar         { width: 6px; height: 6px; }
+::-webkit-scrollbar-track   { background: #f0fdf4; }
+::-webkit-scrollbar-thumb   { background: #86efac; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #16a34a; }
+.scrollbar-thumb-slate-800  { scrollbar-color: #86efac #f0fdf4 !important; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   17. Focus Rings
+   ═══════════════════════════════════════════════════════════════════ */
+*:focus-visible {
+  outline-color: #16a34a !important;
+  box-shadow: 0 0 0 3px rgba(22,163,74,0.25) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   18. Smooth Transitions
+   ═══════════════════════════════════════════════════════════════════ */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   19. Phone Input Fixed +91 Prefix
+   ═══════════════════════════════════════════════════════════════════ */
+.phone-prefix-wrap {
+  display: flex !important;
+  align-items: center !important;
+  background-color: #ffffff !important;
+  border: 1px solid #bbf7d0 !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden !important;
+}
+.phone-prefix-wrap:focus-within {
+  border-color: #16a34a !important;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2) !important;
+}
+.phone-prefix-badge {
+  padding: 0.5rem 0.75rem !important;
+  background-color: #f0fdf4 !important;
+  color: #166534 !important;
+  font-weight: 700 !important;
+  font-family: monospace, monospace !important;
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+  border-right: 1px solid #bbf7d0 !important;
+  user-select: none !important;
+  display: flex !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+.phone-prefix-wrap input {
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0.5rem 0.75rem !important;
+  background-color: transparent !important;
+  outline: none !important;
+  width: 100% !important;
+  font-family: monospace, monospace !important;
+  font-size: 0.75rem !important;
+  line-height: 1rem !important;
+  color: #0f2318 !important;
+}
+.phone-prefix-wrap input:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   WhatsApp Outreach Modal Suite - Clean, User-Friendly Light Theme
+   ═══════════════════════════════════════════════════════════════════ */
+.wa-modal-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  background-color: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(6px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  overflow-y: auto !important;
+}
+
+.wa-modal-card {
+  max-height: calc(100vh - 36px) !important;
+  height: auto !important;
+  max-width: 660px !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+  border-radius: 1rem !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  margin: auto !important;
+}
+
+.wa-modal-header {
+  flex-shrink: 0 !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 12px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background-color: #ffffff !important;
+  border-top-left-radius: 1rem !important;
+  border-top-right-radius: 1rem !important;
+}
+
+.wa-modal-header h3 {
+  color: #0f172a !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.wa-modal-header p {
+  color: #64748b !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.wa-modal-header div[class*="rounded-xl"] {
+  background-color: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #a7f3d0 !important;
+}
+
+.wa-modal-header button {
+  color: #64748b !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.5rem !important;
+}
+.wa-modal-header button:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.wa-modal-body {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding: 14px 18px !important;
+  background-color: #f8fafc !important;
+}
+
+/* Inner Section Cards */
+.wa-modal-body > div {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
+  padding: 11px 13px !important;
+}
+
+/* Section Header Labels - Unified Clean Slate */
+.wa-modal-body label[class*="uppercase"] {
+  color: #0f172a !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.03em !important;
+  display: flex !important;
+  align-items: center !important;
+  margin-bottom: 4px !important;
+}
+
+/* Field Sublabels */
+.wa-modal-body label {
+  color: #334155 !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+
+/* Inputs, Selects, and Textareas */
+.wa-modal-body input[type="text"],
+.wa-modal-body input[type="tel"],
+.wa-modal-body select,
+.wa-modal-body textarea {
+  background-color: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #0f172a !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border-radius: 0.5rem !important;
+  padding: 7px 10px !important;
+  transition: all 0.15s ease !important;
+}
+
+.wa-modal-body input:focus,
+.wa-modal-body select:focus,
+.wa-modal-body textarea:focus {
+  border-color: #059669 !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12) !important;
+  outline: none !important;
+}
+
+.wa-modal-body select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  padding: 4px 8px !important;
+}
+
+/* Phone prefix box */
+.wa-modal-body span[class*="bg-slate-100"],
+.wa-modal-body span[class*="bg-slate-800"] {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+
+/* Batch Mode Info Banner */
+.wa-modal-body div[class*="bg-emerald-50"] {
+  background-color: #f0fdf4 !important;
+  border: 1px solid #bbf7d0 !important;
+  color: #166534 !important;
+  border-radius: 0.75rem !important;
+}
+.wa-modal-body div[class*="bg-emerald-50"] span,
+.wa-modal-body div[class*="bg-emerald-50"] p {
+  color: #166534 !important;
+}
+
+/* Image attachment area */
+.wa-modal-body label[class*="cursor-pointer"],
+.wa-modal-body button[class*="cursor-pointer"] {
+  border-radius: 0.5rem !important;
+}
+.wa-modal-body span.italic {
+  color: #64748b !important;
+}
+
+/* Attached Image Thumbnail Card */
+.wa-modal-body div[class*="border-emerald-200"] {
+  background-color: #f0fdf4 !important;
+  border: 1px solid #86efac !important;
+}
+
+/* Textarea Character Counter & Tip */
+.wa-modal-body p[class*="italic"],
+.wa-modal-body span[class*="text-slate-400"] {
+  color: #64748b !important;
+  font-size: 11px !important;
+}
+
+/* Footer Styling */
+.wa-modal-footer {
+  flex-shrink: 0 !important;
+  border-top: 1px solid #f1f5f9 !important;
+  padding: 12px 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background-color: #ffffff !important;
+  border-bottom-left-radius: 1rem !important;
+  border-bottom-right-radius: 1rem !important;
+}
+
+/* Copy Message Button */
+.wa-modal-footer button[class*="bg-white"] {
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+}
+.wa-modal-footer button[class*="bg-white"]:hover {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+/* Cancel Button */
+.wa-modal-footer button[class*="text-slate-500"] {
+  color: #64748b !important;
+}
+.wa-modal-footer button[class*="text-slate-500"]:hover {
+  color: #0f172a !important;
+}
+
+/* Send via API Button */
+.wa-modal-footer button[class*="bg-sky-50"] {
+  background-color: #f0f9ff !important;
+  color: #0284c7 !important;
+  border: 1px solid #bae6fd !important;
+}
+.wa-modal-footer button[class*="bg-sky-50"]:hover {
+  background-color: #e0f2fe !important;
+  color: #0369a1 !important;
+}
+
+/* Open in WhatsApp Primary CTA */
+.wa-modal-footer button[class*="bg-emerald-600"] {
+  background: #25D366 !important;
+  color: #ffffff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.35) !important;
+  font-weight: 700 !important;
+}
+.wa-modal-footer button[class*="bg-emerald-600"]:hover {
+  background: #20bd5a !important;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.45) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   WHATSAPP OUTREACH MODAL - ENHANCED VISIBILITY & TOP STATUS BANNER
+   ═══════════════════════════════════════════════════════════════════ */
+.wa-top-status-banner {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+}
+.wa-top-status-banner button {
+  cursor: pointer !important;
+}
+
+/* Footer Action Buttons Visibility */
+.wa-modal-footer button {
+  font-family: inherit !important;
+}
+
+/* Cancel Button */
+.wa-modal-footer button.bg-slate-100 {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 600 !important;
+}
+.wa-modal-footer button.bg-slate-100:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Open WhatsApp List Button */
+.wa-modal-footer button.text-emerald-800 {
+  background-color: #ffffff !important;
+  color: #047857 !important;
+  border: 1px solid #10b981 !important;
+  font-weight: 700 !important;
+}
+.wa-modal-footer button.text-emerald-800:hover {
+  background-color: #ecfdf5 !important;
+  color: #065f46 !important;
+  border-color: #059669 !important;
+}
+
+/* Send via API Button */
+.wa-modal-footer button.text-sky-800 {
+  background-color: #f0f9ff !important;
+  color: #0369a1 !important;
+  border: 1px solid #7dd3fc !important;
+  font-weight: 700 !important;
+}
+.wa-modal-footer button.text-sky-800:hover {
+  background-color: #e0f2fe !important;
+  color: #0284c7 !important;
+}
+
+/* Primary Green Send Buttons */
+.wa-modal-footer button.bg-emerald-600 {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.3) !important;
+}
+.wa-modal-footer button.bg-emerald-600:hover {
+  background: #15803d !important;
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.4) !important;
+}
+
+/* Promo Flyer Button */
+.wa-modal-body button.bg-emerald-50 {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  border: 1px solid #6ee7b7 !important;
+  font-weight: 600 !important;
+}
+.wa-modal-body button.bg-emerald-50:hover {
+  background-color: #d1fae5 !important;
+  color: #065f46 !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   MULTI-SEND BUTTONS & TEXT CONTRAST GUARANTEE
+   ═══════════════════════════════════════════════════════════════════ */
+.wa-modal-body .wa-repeat-label {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+.wa-modal-body .wa-repeat-subtext {
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+.wa-modal-body .wa-repeat-btn {
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+  border: 1px solid #cbd5e1 !important;
+  font-weight: 700 !important;
+}
+.wa-modal-body .wa-repeat-btn:hover {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  border-color: #10b981 !important;
+}
+.wa-modal-body .wa-repeat-btn.active {
+  background-color: #16a34a !important;
+  color: #ffffff !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.35) !important;
+}
+
+/* Ensure all text inside white cards in modal body are high contrast */
+.wa-modal-body div.bg-white span,
+.wa-modal-body div.bg-white label,
+.wa-modal-body div.bg-white p {
+  color: #0f172a;
+}
+
+/* Footer strict single-line alignment fix */
+.wa-modal-footer {
+  flex-shrink: 0 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  padding: 12px 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background-color: #ffffff !important;
+  border-bottom-left-radius: 1rem !important;
+  border-bottom-right-radius: 1rem !important;
+  flex-wrap: nowrap !important;
+  gap: 12px !important;
+}
+.wa-modal-footer > div {
+  flex-wrap: nowrap !important;
+}
+.wa-modal-footer button {
+  white-space: nowrap !important;
+}

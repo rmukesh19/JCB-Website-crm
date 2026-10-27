@@ -1,84 +1,30 @@
-import Machine from '../models/Machine.js';
-import Booking from '../models/Booking.js';
-import Invoice from '../models/Invoice.js';
-import Lead from '../models/Lead.js';
-import Customer from '../models/Customer.js';
-import { isDbConnected, memoryStore } from '../services/memoryStore.js';
+import db from '../services/memoryStore.js';
 
-// Bug 3 Fix: When DB is connected, COUNT from DB then ADD memoryStore counts
-// so that both persisted and in-memory records are reflected on the dashboard.
 export const getDashboardMetrics = async (req, res) => {
-  try {
-    if (isDbConnected()) {
-      try {
-        const [
-          dbMachines, dbActiveMachines,
-          dbBookings, dbActiveBookings,
-          dbCustomers, dbActiveLeads,
-          dbInvoices
-        ] = await Promise.all([
-          Machine.countDocuments(),
-          Machine.countDocuments({ status: 'RUNNING' }),
-          Booking.countDocuments(),
-          Booking.countDocuments({ status: 'ACTIVE' }),
-          Customer.countDocuments(),
-          Lead.countDocuments({ status: { $ne: 'LOST' } }),
-          Invoice.find()
-        ]);
+  const companyId = req.currentUser?.companyId || 1;
+  const machines = db.machines.filter(m => m.companyId === companyId);
+  const activeBookings = db.bookings.filter(b => b.companyId === companyId && b.status === 'IN_PROGRESS');
+  const invoices = db.invoices.filter(i => i.companyId === companyId);
+  const expenses = db.expenses.filter(e => e.companyId === companyId);
+  const customers = db.customers.filter(c => c.companyId === companyId);
 
-        // Add memoryStore counts for records not yet persisted to DB
-        const memMachines = memoryStore.machines.length;
-        const memActiveMachines = memoryStore.machines.filter(m => m.status === 'RUNNING').length;
-        const memBookings = memoryStore.bookings.length;
-        const memActiveBookings = memoryStore.bookings.filter(b => b.status === 'ACTIVE').length;
-        const memCustomers = memoryStore.customers.length;
-        const memLeads = memoryStore.leads.filter(l => l.status !== 'LOST').length;
+  const totalRevenue = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0);
+  const totalExpenses = expenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+  const outstandingBalance = invoices.reduce((sum, i) => sum + (i.balanceAmount || 0), 0);
 
-        const allInvoices = [
-          ...dbInvoices,
-          ...memoryStore.invoices.filter(mi => !dbInvoices.find(di => di.id === mi.id))
-        ];
-
-        const totalRevenue = allInvoices.reduce((acc, inv) => acc + (inv.paidAmount || 0), 0);
-        const totalOutstanding = allInvoices.reduce((acc, inv) => acc + (inv.outstandingAmount || 0), 0);
-
-        return res.json({
-          totalMachines: dbMachines + memMachines,
-          activeMachines: dbActiveMachines + memActiveMachines,
-          totalBookings: dbBookings + memBookings,
-          activeBookings: dbActiveBookings + memActiveBookings,
-          totalCustomers: dbCustomers + memCustomers,
-          activeLeads: dbActiveLeads + memLeads,
-          totalRevenue,
-          totalOutstanding
-        });
-      } catch (dbErr) {
-        console.warn('Dashboard DB fallback:', dbErr.message);
-      }
+  res.json({
+    success: true,
+    data: {
+      activeFleet: machines.filter(m => m.status === 'ACTIVE').length,
+      totalFleet: machines.length,
+      activeJobs: activeBookings.length,
+      totalCustomers: customers.length,
+      monthlyRevenue: totalRevenue,
+      totalExpenses,
+      outstandingBalance,
+      netProfit: totalRevenue - totalExpenses,
+      recentBookings: db.bookings.slice(-5),
+      recentExpenses: db.expenses.slice(-5)
     }
-
-    // Pure memoryStore fallback (when DB is offline)
-    const totalMachines = memoryStore.machines.length;
-    const activeMachines = memoryStore.machines.filter(m => m.status === 'RUNNING').length;
-    const totalBookings = memoryStore.bookings.length;
-    const activeBookings = memoryStore.bookings.filter(b => b.status === 'ACTIVE').length;
-    const totalCustomers = memoryStore.customers.length;
-    const activeLeads = memoryStore.leads.filter(l => l.status !== 'LOST').length;
-
-    const totalRevenue = memoryStore.invoices.reduce((acc, inv) => acc + (inv.paidAmount || 0), 0);
-    const totalOutstanding = memoryStore.invoices.reduce((acc, inv) => acc + (inv.outstandingAmount || 0), 0);
-
-    return res.json({
-      totalMachines,
-      activeMachines,
-      totalBookings,
-      activeBookings,
-      totalCustomers,
-      activeLeads,
-      totalRevenue,
-      totalOutstanding
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  });
 };

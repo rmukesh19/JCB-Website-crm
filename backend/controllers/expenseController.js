@@ -1,56 +1,36 @@
 import Expense from '../models/Expense.js';
-import { isDbConnected, memoryStore } from '../services/memoryStore.js';
+
+const getNextId = async () => {
+  const last = await Expense.findOne().sort({ id: -1 }).select('id');
+  return (last && typeof last.id === 'number') ? last.id + 1 : 1;
+};
 
 export const getExpenses = async (req, res) => {
   try {
-    if (isDbConnected()) {
-      try {
-        const expenses = await Expense.find({ companyId: req.currentUser?.companyId || 1 });
-        return res.json(expenses);
-      } catch (dbErr) {
-        console.warn('getExpenses DB fallback:', dbErr.message);
-      }
-    }
-    return res.json(memoryStore.expenses);
+    const expenses = await Expense.find().sort({ id: -1 });
+    res.json(expenses);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching expenses:', err);
+    res.status(500).json({ error: 'Failed to fetch expenses', details: err.message });
   }
 };
 
 export const createExpense = async (req, res) => {
   try {
-    let expense = null;
-    if (isDbConnected()) {
-      try {
-        const count = await Expense.countDocuments();
-        const id = count + 1;
-        expense = new Expense({
-          id,
-          companyId: req.currentUser?.companyId || 1,
-          branchId: req.currentUser?.branchId || 1,
-          expenseDate: new Date().toISOString().split('T')[0],
-          ...req.body
-        });
-        await expense.save();
-      } catch (dbErr) {
-        console.warn('createExpense DB fallback:', dbErr.message);
-      }
-    }
+    const nextId = await getNextId();
+    const expData = {
+      ...req.body,
+      id: nextId,
+      companyId: req.body.companyId || req.currentUser?.companyId || 1,
+      branchId: req.body.branchId || req.currentUser?.branchId || 1,
+      date: req.body.date || new Date().toISOString().split('T')[0],
+      amount: Number(req.body.amount || 0)
+    };
 
-    if (!expense) {
-      const id = memoryStore.expenses.length + 1;
-      expense = {
-        id,
-        companyId: req.currentUser?.companyId || 1,
-        branchId: req.currentUser?.branchId || 1,
-        expenseDate: new Date().toISOString().split('T')[0],
-        ...req.body
-      };
-      memoryStore.expenses.push(expense);
-    }
-
-    return res.json(expense);
+    const newExpense = await Expense.create(expData);
+    res.status(201).json(newExpense);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error creating expense:', err);
+    res.status(500).json({ error: 'Failed to create expense', details: err.message });
   }
 };

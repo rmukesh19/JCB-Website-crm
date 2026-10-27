@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MMT ENTERPRISES - Color Palette & Design System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 8mm 10mm;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #edfaf2;
+      color: #0f2318;
+      line-height: 1.35;
+      padding: 16px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #d1fae5;
+      border-radius: 14px;
+      padding: 20px 24px;
+      box-shadow: 0 4px 20px rgba(22, 163, 74, 0.08);
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #bbf7d0;
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+    }
+
+    .brand-title {
+      font-size: 19px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #0f2318;
+    }
+
+    .brand-subtitle {
+      font-size: 10px;
+      font-weight: 700;
+      color: #15803d;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .meta-tag {
+      text-align: right;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #4b5563;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 4px 10px;
+      border-radius: 6px;
+      line-height: 1.3;
+    }
+
+    /* Section Styles */
+    .section-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #166534;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 13px;
+      margin-bottom: 8px;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #d1fae5;
+    }
+
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 3.5px;
+      height: 11px;
+      background: #16a34a;
+      border-radius: 2px;
+    }
+
+    /* Swatch Grid */
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .swatch-card {
+      background: #ffffff;
+      border: 1px solid #d1fae5;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+    }
+
+    .swatch-color {
+      height: 32px;
+      width: 100%;
+      position: relative;
+    }
+
+    .swatch-info {
+      padding: 6px 8px;
+    }
+
+    .swatch-name {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #0f2318;
+      margin-bottom: 1px;
+    }
+
+    .swatch-role {
+      font-size: 8.5px;
+      color: #64748b;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .swatch-codes {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 600;
+      color: #166534;
+      background: #f0fdf4;
+      padding: 2px 5px;
+      border-radius: 4px;
+      border: 1px solid #bbf7d0;
+    }
+
+    /* Live Preview Section */
+    .preview-box {
+      background: #edfaf2;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .kpi-sample {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fffe 100%);
+      border: 1px solid #d1fae5;
+      border-radius: 6px;
+      padding: 7px 10px;
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kpi-title {
+      font-size: 8px;
+      font-weight: 800;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .kpi-value {
+      font-size: 14px;
+      font-weight: 900;
+      color: #0f2318;
+      margin-top: 1px;
+    }
+
+    .kpi-badge {
+      background: #dcfce7;
+      color: #15803d;
+      padding: 3px 6px;
+      border-radius: 5px;
+      font-size: 11px;
+    }
+
+    .btn-sample-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      align-items: center;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 5px;
+      border: none;
+      box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: #15803d;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 5px;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-sample {
+      display: inline-block;
+      font-size: 8.5px;
+      font-weight: 700;
+      padding: 2.5px 6px;
+      border-radius: 4px;
+    }
+
+    .badge-success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-warning { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-danger  { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
+    .badge-info    { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+    /* Table Specs */
+    .specs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9.5px;
+      margin-top: 6px;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid #d1fae5;
+    }
+
+    .specs-table th {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      color: #166534;
+      font-weight: 700;
+      text-align: left;
+      padding: 5px 8px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .specs-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #d1fae5;
+      color: #1a3326;
+    }
+
+    .specs-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .code-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      padding: 1.5px 4px;
+      border-radius: 3px;
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .footer {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid #d1fae5;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8.5px;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .no-print-bar {
+      margin-bottom: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #bbf7d0;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+
+    @media print {
+      .no-print-bar {
+        display: none !important;
+      }
+      body {
+        background: #ffffff !important;
+        padding: 0 !important;
+      }
+      .container {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Interactive top bar for web view -->
+  <div class="no-print-bar">
+    <div style="font-weight: 700; color: #15803d; font-size: 12px;">
+      📄 MMT ENTERPRISES — Official Color Palette & Design System Document
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button onclick="window.print()" style="background: #16a34a; color: #ffffff; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer;">
+        🖨️ Print / Save as PDF
+      </button>
+      <a href="/" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 11px; text-decoration: none;">
+        ← Back to App
+      </a>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="brand-group">
+        <div class="logo-badge">MMT</div>
+        <div>
+          <div class="brand-title">MMT ENTERPRISES</div>
+          <div class="brand-subtitle">FLEET & BILLING ERP • COLOR PALETTE SPECIFICATION</div>
+        </div>
+      </div>
+      <div class="meta-tag">
+        THEME: LIGHT MINT & EMERALD<br>
+        SPEC: PRODUCTION UI v2.0
+      </div>
+    </div>
+
+    <!-- 1. Primary Brand Greens -->
+    <div class="section-title">1. Primary Brand & Accent Colors</div>
+    <div class="grid-4">
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #16a34a;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Primary Emerald</div>
+          <div class="swatch-role">Buttons, Active Tabs, Highlights</div>
+          <div class="swatch-codes"><span>HEX</span><span>#16a34a</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #15803d;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Deep Forest</div>
+          <div class="swatch-role">Gradients, Hover States, Links</div>
+          <div class="swatch-codes"><span>HEX</span><span>#15803d</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #166534;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Dark Pine</div>
+          <div class="swatch-role">Table Headers, Section Titles</div>
+          <div class="swatch-codes"><span>HEX</span><span>#166534</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #22c55e;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Vivid Mint</div>
+          <div class="swatch-role">Logo Badge, Success Indicators</div>
+          <div class="swatch-codes"><span>HEX</span><span>#22c55e</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Surface & Background Colors -->
+    <div class="section-title">2. Canvas & Surface Hierarchy</div>
+    <div class="grid-4">
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #edfaf2; border-bottom: 1px solid #d1fae5;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">App Canvas Tint</div>
+          <div class="swatch-role">Main Body Background</div>
+          <div class="swatch-codes"><span>HEX</span><span>#edfaf2</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #f0fdf4; border-bottom: 1px solid #d1fae5;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Sidebar Canvas</div>
+          <div class="swatch-role">Navigation & Side Panels</div>
+          <div class="swatch-codes"><span>HEX</span><span>#f0fdf4</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: linear-gradient(135deg, #ffffff 0%, #f8fffe 100%); border-bottom: 1px solid #d1fae5;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Card Surface</div>
+          <div class="swatch-role">KPI Widgets, Table Cards</div>
+          <div class="swatch-codes"><span>HEX</span><span>#ffffff</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #dcfce7; border-bottom: 1px solid #d1fae5;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Active Selection</div>
+          <div class="swatch-role">Nav Hover, Table Row Hover</div>
+          <div class="swatch-codes"><span>HEX</span><span>#dcfce7</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Typography Hierarchy -->
+    <div class="section-title">3. Text & Typography Readability</div>
+    <div class="grid-4">
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #0f2318;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Primary Heading</div>
+          <div class="swatch-role">High Contrast Numbers & Titles</div>
+          <div class="swatch-codes"><span>HEX</span><span>#0f2318</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #1a3326;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Body Text</div>
+          <div class="swatch-role">Nav Labels, Table Data, Forms</div>
+          <div class="swatch-codes"><span>HEX</span><span>#1a3326</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #4b5563;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Muted / Subtitle</div>
+          <div class="swatch-role">KPI Sub-labels, Timestamps</div>
+          <div class="swatch-codes"><span>HEX</span><span>#4b5563</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #15803d;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Accent Text</div>
+          <div class="swatch-role">Currency Signs, Interactive Links</div>
+          <div class="swatch-codes"><span>HEX</span><span>#15803d</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Functional Status Badges -->
+    <div class="section-title">4. Functional Status Colors</div>
+    <div class="grid-4">
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #dcfce7; border-left: 5px solid #16a34a;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Success / Active</div>
+          <div class="swatch-role">Machines Running, Paid</div>
+          <div class="swatch-codes"><span>Text</span><span>#047857</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #fef3c7; border-left: 5px solid #b45309;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Warning / Alert</div>
+          <div class="swatch-role">Low Stock, Service Due</div>
+          <div class="swatch-codes"><span>Text</span><span>#b45309</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #ffe4e6; border-left: 5px solid #be123c;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Danger / Expense</div>
+          <div class="swatch-role">Net Loss, Overdue Invoices</div>
+          <div class="swatch-codes"><span>Text</span><span>#be123c</span></div>
+        </div>
+      </div>
+
+      <div class="swatch-card">
+        <div class="swatch-color" style="background: #e0f2fe; border-left: 5px solid #0284c7;"></div>
+        <div class="swatch-info">
+          <div class="swatch-name">Info / Scheduled</div>
+          <div class="swatch-role">Bookings, Machine Logs</div>
+          <div class="swatch-codes"><span>Text</span><span>#0369a1</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. UI Component Implementation Preview -->
+    <div class="section-title">5. UI Component Preview & Applied Design</div>
+    <div class="preview-box">
+      <div class="preview-grid">
+        <div class="kpi-sample">
+          <div>
+            <div class="kpi-title">Today Inquiry</div>
+            <div class="kpi-value">2</div>
+          </div>
+          <div class="kpi-badge">💬</div>
+        </div>
+        <div class="kpi-sample">
+          <div>
+            <div class="kpi-title">Bank Balance</div>
+            <div class="kpi-value">₹6,42,800</div>
+          </div>
+          <div class="kpi-badge">🏦</div>
+        </div>
+        <div class="kpi-sample">
+          <div>
+            <div class="kpi-title">Running Machines</div>
+            <div class="kpi-value">1</div>
+          </div>
+          <div class="kpi-badge">🚜</div>
+        </div>
+      </div>
+
+      <div class="btn-sample-row">
+        <button class="btn-primary">✓ Confirm Booking</button>
+        <button class="btn-secondary">Export Excel Report</button>
+        <div style="margin-left: auto; display: flex; gap: 5px;">
+          <span class="badge-sample badge-success">● Active</span>
+          <span class="badge-sample badge-warning">● Maintenance</span>
+          <span class="badge-sample badge-danger">● Overdue</span>
+          <span class="badge-sample badge-info">● Scheduled</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Design Tokens Reference Table -->
+    <div class="section-title">6. Design Tokens & CSS Specification</div>
+    <table class="specs-table">
+      <thead>
+        <tr>
+          <th>Token Name</th>
+          <th>Hex / Value</th>
+          <th>Usage Rule</th>
+          <th>CSS Utility</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>--brand-primary</strong></td>
+          <td><span class="code-pill">#16a34a</span></td>
+          <td>Primary buttons, key action highlights, active tab states</td>
+          <td><code>.bg-emerald-600</code></td>
+        </tr>
+        <tr>
+          <td><strong>--brand-gradient</strong></td>
+          <td><span class="code-pill">linear-gradient(135deg, #16a34a, #15803d)</span></td>
+          <td>Vivid green gradient buttons and active nav pills</td>
+          <td><code>.btn-primary</code></td>
+        </tr>
+        <tr>
+          <td><strong>--canvas-bg</strong></td>
+          <td><span class="code-pill">#edfaf2</span></td>
+          <td>Global page background tint</td>
+          <td><code>html, body</code></td>
+        </tr>
+        <tr>
+          <td><strong>--card-surface</strong></td>
+          <td><span class="code-pill">#ffffff (with #d1fae5 border)</span></td>
+          <td>Dashboard metrics, data tables, modals, popup forms</td>
+          <td><code>.bg-white, card</code></td>
+        </tr>
+        <tr>
+          <td><strong>--border-subtle</strong></td>
+          <td><span class="code-pill">#bbf7d0 / #d1fae5</span></td>
+          <td>Card borders, divider lines, form input outlines</td>
+          <td><code>border-emerald-200</code></td>
+        </tr>
+        <tr>
+          <td><strong>--text-high-contrast</strong></td>
+          <td><span class="code-pill">#0f2318</span></td>
+          <td>All major heading text, numbers, metric values</td>
+          <td><code>text-slate-900</code></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div>MMT ENTERPRISES • BRAND GUIDELINES & COLOR SYSTEM</div>
+      <div>GENERATED FOR PRODUCTION ERP SYSTEM</div>
+    </div>
+  </div>
+
+</body>
+</html>

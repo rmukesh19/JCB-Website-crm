@@ -1,32 +1,20 @@
-# JCB 360 - ERP Billing & Management Software
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Comprehensive JCB management and billing platform featuring multi-company, multi-branch operations, diesel tracking, fleet maintenance, CRM, and accounting.
+# Run and deploy your AI Studio app
 
-## Features
-- **Fleet & Master Management**: Track JCB machines, operator assignments, and equipment status.
-- **Logistics & Contract Billing**: Manage customer bookings, hourly/daily billing, and invoices.
-- **Diesel & Maintenance Tracker**: Log refuels, track fuel efficiency, and monitor service schedules.
-- **CRM & WhatsApp Marketing**: Customer relationship management and direct WhatsApp campaign outreach.
-- **Financial Accounts & Expenses**: Double-entry accounting, general ledger, and expense tracking.
+This contains everything you need to run your app locally.
 
-## Getting Started
+View your app in AI Studio: https://ai.studio/apps/a03ef47a-1c43-4730-a147-c5daa7497c8d
 
-### Prerequisites
-- Node.js (v18+)
-- PostgreSQL database
+## Run Locally
 
-### Installation & Run
+**Prerequisites:**  Node.js
 
-1. **Backend**:
-   ```bash
-   cd backend
-   npm install
-   npm run dev
-   ```
 
-2. **Frontend**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`

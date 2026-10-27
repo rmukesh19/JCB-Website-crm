@@ -1,68 +1,32 @@
-import MaintenanceRecord from '../models/MaintenanceRecord.js';
-import Machine from '../models/Machine.js';
-import { isDbConnected, memoryStore } from '../services/memoryStore.js';
+import db from '../services/memoryStore.js';
 
-export const getMaintenanceRecords = async (req, res) => {
-  try {
-    if (isDbConnected()) {
-      try {
-        const records = await MaintenanceRecord.find({ companyId: req.currentUser?.companyId || 1 });
-        return res.json(records);
-      } catch (dbErr) {
-        console.warn('getMaintenanceRecords DB fallback:', dbErr.message);
-      }
-    }
-    return res.json(memoryStore.maintenanceRecords);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+export const getMaintenanceRecords = async (req, res) => res.json(db.maintenanceRecords);
 
 export const createMaintenanceRecord = async (req, res) => {
-  try {
-    let record = null;
-    if (isDbConnected()) {
-      try {
-        const count = await MaintenanceRecord.countDocuments();
-        const id = count + 1;
-        record = new MaintenanceRecord({
-          id,
-          companyId: req.currentUser?.companyId || 1,
-          branchId: req.currentUser?.branchId || 1,
-          serviceDate: new Date().toISOString().split('T')[0],
-          ...req.body
-        });
-        await record.save();
+  const cost = Number(req.body.cost || req.body.totalCost || 0);
+  const rec = {
+    id: db.maintenanceRecords.length > 0 ? Math.max(...db.maintenanceRecords.map(m => m.id)) + 1 : 1,
+    companyId: req.body.companyId || req.currentUser?.companyId || 1,
+    branchId: req.body.branchId || req.currentUser?.branchId || 1,
+    serviceDate: req.body.serviceDate || new Date().toISOString().split('T')[0],
+    cost,
+    status: 'COMPLETED',
+    ...req.body
+  };
+  db.maintenanceRecords.push(rec);
 
-        await Machine.findOneAndUpdate({ id: record.machineId }, {
-          lastServiceDate: record.serviceDate,
-          status: 'AVAILABLE'
-        });
-      } catch (dbErr) {
-        console.warn('createMaintenanceRecord DB fallback:', dbErr.message);
-      }
-    }
+  // Record in expenses
+  db.expenses.push({
+    id: db.expenses.length + 1,
+    companyId: rec.companyId,
+    branchId: rec.branchId,
+    machineId: rec.machineId,
+    category: 'MAINTENANCE',
+    amount: cost,
+    description: `Maintenance ${rec.serviceType || 'Service'} for ${rec.machineCode || 'machine'}`,
+    date: rec.serviceDate,
+    vendor: rec.serviceCenter || 'Service Station'
+  });
 
-    if (!record) {
-      const id = memoryStore.maintenanceRecords.length + 1;
-      record = {
-        id,
-        companyId: req.currentUser?.companyId || 1,
-        branchId: req.currentUser?.branchId || 1,
-        serviceDate: new Date().toISOString().split('T')[0],
-        ...req.body
-      };
-      memoryStore.maintenanceRecords.push(record);
-
-      const m = memoryStore.machines.find(x => x.id === record.machineId);
-      if (m) {
-        m.lastServiceDate = record.serviceDate;
-        m.status = 'AVAILABLE';
-      }
-    }
-
-    return res.json(record);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.status(201).json(rec);
 };

@@ -1,118 +1,117 @@
 import Customer from '../models/Customer.js';
-import logAudit from '../services/auditService.js';
-import { isDbConnected, memoryStore } from '../services/memoryStore.js';
+
+const getNextId = async () => {
+  const last = await Customer.findOne().sort({ id: -1 }).select('id');
+  return (last && typeof last.id === 'number') ? last.id + 1 : 1;
+};
+
+const findCustomerById = (id) => {
+  if (id && String(id).length === 24) {
+    return Customer.findOne({ $or: [{ _id: id }, { id: Number(id) || -1 }] });
+  }
+  const num = Number(id);
+  if (!isNaN(num)) {
+    return Customer.findOne({ $or: [{ id: num }, { _id: id }] });
+  }
+  return Customer.findOne({ _id: id });
+};
+
+const formatCustomer = (c) => {
+  const obj = c.toObject ? c.toObject() : c;
+  return {
+    ...obj,
+    id: obj.id || obj._id,
+    name: obj.name || obj.company || 'Customer',
+    company: obj.company || obj.name || 'Customer',
+    customerType: obj.customerType || 'Individual / Home Owner',
+    phone: obj.phone || obj.mobile || '',
+    mobile: obj.mobile || obj.phone || '',
+    outstanding: Number(obj.outstanding !== undefined ? obj.outstanding : (obj.currentBalance || 0)),
+    currentBalance: Number(obj.currentBalance !== undefined ? obj.currentBalance : (obj.outstanding || 0)),
+    creditLimit: Number(obj.creditLimit || 100000),
+    status: obj.status || 'ACTIVE'
+  };
+};
 
 export const getCustomers = async (req, res) => {
   try {
-    if (isDbConnected()) {
-      try {
-        const customers = await Customer.find({ companyId: req.currentUser?.companyId || 1 });
-        return res.json(customers);
-      } catch (dbErr) {
-        console.warn('getCustomers DB fallback:', dbErr.message);
-      }
-    }
-    return res.json(memoryStore.customers);
+    const customers = await Customer.find().sort({ id: 1 });
+    res.json(customers.map(formatCustomer));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching customers:', err);
+    res.status(500).json({ error: 'Failed to fetch customers', details: err.message });
   }
 };
 
 export const createCustomer = async (req, res) => {
   try {
-    let newCustomer = null;
-    if (isDbConnected()) {
-      try {
-        const count = await Customer.countDocuments();
-        const id = count + 1;
-        newCustomer = new Customer({
-          id,
-          companyId: req.currentUser?.companyId || 1,
-          outstandingBalance: 0,
-          creditLimit: 100000,
-          mobile: req.body.mobile || req.body.phone,
-          phone: req.body.phone || req.body.mobile,
-          address: req.body.address || req.body.billingAddress,
-          billingAddress: req.body.billingAddress || req.body.address,
-          ...req.body
+    const rawMobile = req.body.mobile || req.body.phone || '';
+    const rawName = (req.body.name || req.body.company || '').trim();
+
+    const cleanPhone = (p) => {
+      const d = String(p || '').replace(/\D/g, '');
+      return d.length >= 10 ? d.slice(-10) : d;
+    };
+    const targetPhone = cleanPhone(rawMobile);
+    const targetName = rawName.toLowerCase();
+
+    if (targetPhone || targetName) {
+      const existing = await Customer.find();
+      const duplicate = existing.find(c => {
+        const cPhone = cleanPhone(c.mobile || c.phone);
+        if (targetPhone && cPhone && targetPhone === cPhone) return true;
+        if (targetName && (c.name || '').trim().toLowerCase() === targetName && (c.company || '').trim().toLowerCase() === (req.body.company || '').trim().toLowerCase()) return true;
+        return false;
+      });
+
+      if (duplicate) {
+        return res.status(400).json({
+          error: `Duplicate Entry! A customer with phone "${rawMobile || duplicate.mobile}" or name "${rawName}" already exists (${duplicate.name}).`,
+          duplicate: true
         });
-        await newCustomer.save();
-      } catch (dbErr) {
-        console.warn('createCustomer DB fallback:', dbErr.message);
       }
     }
 
-    if (!newCustomer) {
-      const id = memoryStore.customers.length + 1;
-      newCustomer = {
-        id,
-        companyId: req.currentUser?.companyId || 1,
-        outstandingBalance: 0,
-        creditLimit: 100000,
-        ...req.body
-      };
-      memoryStore.customers.push(newCustomer);
-    }
+    const nextId = await getNextId();
+    const formatted = formatCustomer({
+      ...req.body,
+      id: nextId,
+      companyId: req.body.companyId || req.currentUser?.companyId || 1
+    });
 
-    await logAudit(req.currentUser?.companyId, req.currentUser?.id, req.currentUser?.name, 'CREATE_CUSTOMER', `Registered customer ${newCustomer.name}`);
-    return res.json(newCustomer);
+    const created = await Customer.create(formatted);
+    res.status(201).json(formatCustomer(created));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error creating customer:', err);
+    res.status(500).json({ error: 'Failed to create customer', details: err.message });
   }
 };
 
 export const updateCustomer = async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    let updated = null;
-    if (isDbConnected()) {
-      try {
-        updated = await Customer.findOneAndUpdate({ id }, req.body, { new: true });
-      } catch (dbErr) {
-        console.warn('updateCustomer DB fallback:', dbErr.message);
-      }
-    }
+    const customer = await findCustomerById(req.params.id);
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
 
-    if (!updated) {
-      const idx = memoryStore.customers.findIndex(c => c.id === id);
-      if (idx !== -1) {
-        memoryStore.customers[idx] = { ...memoryStore.customers[idx], ...req.body };
-        updated = memoryStore.customers[idx];
-      }
-    }
+    const formatted = formatCustomer({ ...customer.toObject(), ...req.body });
+    Object.assign(customer, formatted);
+    await customer.save();
 
-    if (!updated) return res.status(404).json({ error: 'Customer not found' });
-    await logAudit(req.currentUser?.companyId, req.currentUser?.id, req.currentUser?.name, 'UPDATE_CUSTOMER', `Updated customer ${updated.name}`);
-    return res.json(updated);
+    res.json(formatCustomer(customer));
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error updating customer:', err);
+    res.status(500).json({ error: 'Failed to update customer', details: err.message });
   }
 };
 
 export const deleteCustomer = async (req, res) => {
   try {
-    const id = parseInt(req.params.id, 10);
-    let deleted = null;
-    if (isDbConnected()) {
-      try {
-        deleted = await Customer.findOneAndDelete({ id });
-      } catch (dbErr) {
-        console.warn('deleteCustomer DB fallback:', dbErr.message);
-      }
-    }
+    const customer = await findCustomerById(req.params.id);
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
 
-    if (!deleted) {
-      const idx = memoryStore.customers.findIndex(c => c.id === id);
-      if (idx !== -1) {
-        deleted = memoryStore.customers[idx];
-        memoryStore.customers.splice(idx, 1);
-      }
-    }
-
-    if (!deleted) return res.status(404).json({ error: 'Customer not found' });
-    await logAudit(req.currentUser?.companyId, req.currentUser?.id, req.currentUser?.name, 'DELETE_CUSTOMER', `Deleted customer ${deleted.name}`);
-    return res.json({ success: true });
+    await Customer.deleteOne({ _id: customer._id });
+    res.json({ success: true, message: 'Customer removed' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error deleting customer:', err);
+    res.status(500).json({ error: 'Failed to delete customer', details: err.message });
   }
 };
