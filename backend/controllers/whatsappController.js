@@ -81,12 +81,12 @@ export const createCampaign = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const { to, message, imageUrl, customerName, sector } = req.body;
-    if (!to || (!message && !imageUrl)) {
-      return res.status(400).json({ success: false, error: 'Recipient phone number and message/image are required.' });
+    const { to, message, imageUrl, customerName, sector, templateName } = req.body;
+    if (!to || (!message && !imageUrl && !templateName)) {
+      return res.status(400).json({ success: false, error: 'Recipient phone number and message/image/template are required.' });
     }
 
-    const result = await sendWhatsAppMessage({ to, text: message, imageUrl, customerName, sector });
+    const result = await sendWhatsAppMessage({ to, text: message, imageUrl, customerName, sector, templateName });
     if (result.success) {
       return res.json({ success: true, messageId: result.messageId, recipient: to });
     } else {
@@ -105,12 +105,12 @@ export const sendMessage = async (req, res) => {
 
 export const batchSend = async (req, res) => {
   try {
-    const { recipients, message, imageUrl, sector } = req.body;
+    const { recipients, message, imageUrl, sector, templateName } = req.body;
     if (!Array.isArray(recipients) || recipients.length === 0) {
       return res.status(400).json({ success: false, error: 'No recipients provided for batch send' });
     }
-    if (!message && !imageUrl) {
-      return res.status(400).json({ success: false, error: 'Message or image is required' });
+    if (!message && !imageUrl && !templateName) {
+      return res.status(400).json({ success: false, error: 'Message or image or template is required' });
     }
 
     const results = [];
@@ -145,7 +145,8 @@ export const batchSend = async (req, res) => {
         text: personalizedMessage,
         imageUrl: imageUrl || undefined,
         customerName: item.customerName,
-        sector: sector || item.customerType
+        sector: sector || item.customerType,
+        templateName
       });
 
       if (resItem.success) {

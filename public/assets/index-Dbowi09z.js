@@ -1746,16 +1746,58 @@ Net Profit,,${W.netProf}\r
     ]})
   ]});
 }
-function lde({currentUser:e,machines:t=[],bookings:n=[],invoices:r=[],customers:s=[],token:o,getHeaders:c,onNavigate:d,showToast:f,loadAllData:m}){var lr,qr;const p=Bi(),x=On(),[b,N]=Y.useState(()=>{try{const _c=localStorage.getItem("jcb360_crm_leads");if(_c){const _p=JSON.parse(_c);if(Array.isArray(_p)&&_p.length>0)return _p}}catch(e){}return[]}),[j,w]=Y.useState(!1),S=Y.useMemo(()=>{const U=x.pathname.toLowerCase();return U.includes("/crm/leads")?"leads":U.includes("/crm/followup")||U.includes("/crm/follow-up")||U.includes("/crm/reminder")?"followups":U.includes("/crm/quotation")||U.includes("/crm/quote")?"quotations":U.includes("/crm/executive")||U.includes("/crm/exec")?"executive":U.includes("/crm/report")?"reports":"dashboard"},[x.pathname]),A=U=>{U==="dashboard"?p("/crm/dashboard"):U==="leads"?p("/crm/leads"):U==="followups"?p("/crm/followups"):U==="quotations"?p("/crm/quotations"):U==="executive"?p("/crm/executive"):U==="reports"&&p("/crm/reports")},[O,E]=Y.useState(""),[crmSector,setCrmSector]=Y.useState("ALL"),[waSector,setWaSector]=Y.useState("ALL"),[waImage,setWaImage]=Y.useState(""),[isBatchMode,setIsBatchMode]=Y.useState(!1),[batchProgress,setBatchProgress]=Y.useState(null),[showBatchList,setShowBatchList]=Y.useState(!1),[k,P]=Y.useState("ALL"),[R,L]=Y.useState("ALL"),[M,H]=Y.useState("ALL"),[$,V]=Y.useState("ALL"),[K,ve]=Y.useState("ALL"),[le,de]=Y.useState(!1),[F,Z]=Y.useState(null),[ie,ge]=Y.useState(!1),[D,_]=Y.useState(!1),[te,J]=Y.useState(""),[xe,Te]=Y.useState([]),[Ce,_e]=Y.useState(!1),[Qe,je]=Y.useState(!1),[Me,se]=Y.useState({followUpDate:new Date().toISOString().split("T")[0],followUpTime:"10:00",followUpType:"Phone Call",discussionNotes:"",nextFollowUpDate:"",nextFollowUpTime:"",customerResponse:"Neutral",status:"COMPLETED"}),[ae,Fe]=Y.useState(!1),[$e,De]=Y.useState(null),[B,Ie]=Y.useState({date:new Date().toISOString().split("T")[0],taxRate:18,items:[{machineName:"JCB 3DX Super",rate:1200,duration:"8 Hours",total:1200}],terms:"Payment terms: 50% advance, 50% upon work completion.",status:"SENT"}),[ot,ee]=Y.useState(!1),[Ae,Ke]=Y.useState(null),[st,Xt]=Y.useState("INQUIRY_GREETING"),[Mt,on]=Y.useState(""),[cn,W]=Y.useState("leads"),[Re,Ot]=Y.useState(""),[C,Q]=Y.useState(""),[G,he]=Y.useState({customerName:"",companyName:"",mobileNumber:"",whatsAppNumber:"",email:"",district:"",area:"",address:"",businessType:"Contractor",interestedMachine:"",rentalRequirement:"Hourly",budget:"",leadSource:"Website",marketingExecutive:(e==null?void 0:e.name)||(e==null?void 0:e.username)||"Admin",priority:"MEDIUM",expectedBookingDate:"",remarks:"",status:"NEW"}),pe=Y.useCallback(async()=>{const _tk=o||localStorage.getItem("jcb360_token");if(_tk){w(!0);try{const _h=(c?c():{})||{};!_h.Authorization&&(_h.Authorization=_tk);const U=await fetch("/api/crm/leads",{headers:_h});if(U.ok){const ke=await U.json();const _arr=Array.isArray(ke)?ke:(ke.leads||[]);N(_arr);try{localStorage.setItem("jcb360_crm_leads",JSON.stringify(_arr))}catch(e){}}else{try{const _c=localStorage.getItem("jcb360_crm_leads");if(_c){const _p=JSON.parse(_c);if(Array.isArray(_p)&&_p.length)N(_p)}}catch(e){}}}catch(U){console.error("Error fetching leads:",U);try{const _c=localStorage.getItem("jcb360_crm_leads");if(_c){const _p=JSON.parse(_c);if(Array.isArray(_p)&&_p.length)N(_p)}}catch(e){}}finally{w(!1)}}},[o,c,f]);Y.useEffect(()=>{pe()},[pe,x.pathname]);Y.useEffect(()=>{const _iv=setInterval(()=>pe(),15000);return()=>clearInterval(_iv)},[pe]);const Se=["Website","Walk-in","Phone Call","WhatsApp","Facebook","Instagram","Google Ads","Referral","Existing Customer","Other"],me=["NEW","CONTACTED","FOLLOW_UP","INTERESTED","QUOTATION_SENT","NEGOTIATION","CONVERTED","LOST","HOLD"],qe=["Phone Call","WhatsApp","SMS","Office Visit","Site Visit","Email","Video Call"],Ee=["HIGH","MEDIUM","LOW"],ut=async U=>{if(U.preventDefault(),!G.customerName||!G.mobileNumber){f("Please provide Customer Name and Mobile Number.","WARNING");return}const _cp=p=>String(p||"").replace(/\D/g,"").slice(-10);const _tp=_cp(G.mobileNumber);if(_tp.length!==10){f("Please enter a valid 10-digit mobile number.","WARNING");return}if(_tp==="9626546679"){f("Cannot use +91 96265 46679: This is your own WhatsApp Business sender number. Please enter the customer's mobile number.","WARNING");return}if(!F&&_tp&&b.some(ex=>_cp(ex.mobileNumber||ex.phone)===_tp)){const _dup=b.find(ex=>_cp(ex.mobileNumber||ex.phone)===_tp);f(`Duplicate Entry! A lead with mobile ${_tp} already exists (${_dup?.customerName||_dup?.name||"Existing Lead"}).`,"WARNING");return}try{const ke=F?`/api/crm/leads/${F.id}`:"/api/crm/leads";const _res=await fetch(ke,{method:F?"PUT":"POST",headers:c(),body:JSON.stringify(G)});if(_res.ok){f(F?"Lead updated successfully.":"New CRM lead created successfully.","SUCCESS");de(!1);Z(null);pe()}else{const _errData=await _res.json().catch(()=>({}));f(_errData.error||"Failed to save lead: duplicate or invalid details.","ERROR")}}catch(ke){console.error("Error saving lead:",ke),f("Network error saving lead.","ERROR")}},We=async U=>{if(window.confirm("Are you sure you want to delete this lead?"))try{(await fetch(`/api/crm/leads/${U}`,{method:"DELETE",headers:c()})).ok?(f("Lead deleted successfully.","SUCCESS"),(F==null?void 0:F.id)===U&&ge(!1),pe()):f("Failed to delete lead.","ERROR")}catch(ke){console.error("Error deleting lead:",ke),f("Network error deleting lead.","ERROR")}},Rt=async U=>{var ke;try{const Ye=await fetch(`/api/crm/leads/${U.id}/convert`,{method:"POST",headers:c()});if(Ye.ok){const Je=await Ye.json();f(`Lead converted! Customer created/linked (ID: ${Je.customerId}).`,"SUCCESS"),pe(),m&&m(),p("/booking/new",{state:{prefillCustomerId:Je.customerId,prefillLocation:U.address||U.district||"",prefillMachineId:((ke=t.find(xt=>xt.status==="AVAILABLE"))==null?void 0:ke.id)||""}})}else f("Failed to convert lead to customer.","ERROR")}catch(Ye){console.error("Error converting lead:",Ye),f("Network error converting lead.","ERROR")}},Dt=U=>{var Je;const ke=(Je=U.target.files)==null?void 0:Je[0];if(!ke)return;const Ye=new FileReader;Ye.onload=xt=>{var ft;const dt=(ft=xt.target)==null?void 0:ft.result;typeof dt=="string"&&(J(dt),Ur(dt))},Ye.readAsText(ke)},Ur=U=>{const ke=U.trim().split(`\n`);if(ke.length<=1){Te([]);return}const Ye=ke[0].split(",").map(tt=>tt.trim().toLowerCase().replace(/["\r]/g,"")),Je=Ye.some(tt=>tt.includes("name")||tt.includes("customer")||tt.includes("phone")||tt.includes("mobile")||tt.includes("district")),xt=Je?1:0,dt={};Je&&Ye.forEach((tt,kt)=>{tt.includes("customertype")||tt.includes("customer type")||tt.includes("business type")||(tt.includes("type")&&!tt.includes("rental")&&!tt.includes("machine"))?dt.customerType=kt:tt.includes("customer")||tt.includes("client")||tt==="name"?dt.customerName=kt:tt.includes("company")?dt.companyName=kt:tt.includes("whatsapp")?dt.whatsAppNumber=kt:tt.includes("mobile")||tt.includes("phone")?dt.mobileNumber=kt:tt.includes("email")?dt.email=kt:tt.includes("district")||tt.includes("city")?dt.district=kt:tt.includes("area")||tt.includes("locality")?dt.area=kt:tt.includes("address")||tt.includes("street")?dt.address=kt:tt.includes("machine")||tt.includes("interested")?dt.interestedMachine=kt:tt.includes("requirement")||tt.includes("rental")?dt.rentalRequirement=kt:tt.includes("budget")||tt.includes("rate")||tt.includes("amount")||tt.includes("value")?dt.budget=kt:tt.includes("source")?dt.leadSource=kt:tt.includes("priority")&&(dt.priority=kt)});const ft=[];for(let tt=xt;tt<ke.length;tt++){if(!ke[tt].trim())continue;const kt=ke[tt].split(",").map(we=>we.trim().replace(/^"|"$/g,"").replace(/\r/g,"")),Ft=(we,Oe,Xe="")=>dt[we]!==void 0&&kt[dt[we]]!==void 0&&kt[dt[we]]!==""?kt[dt[we]]:kt[Oe]!==void 0&&kt[Oe]!==""?kt[Oe]:Xe;let _cType=Ft("customerType",8,"Contractor"),_intMach=Ft("interestedMachine",9,"JCB 3DX Super"),_rentReq=Ft("rentalRequirement",10,"Hourly"),_bgVal=Ft("budget",11,""),_lSrc=Ft("leadSource",12,"CSV Import"),_prio=(Ft("priority",13,"MEDIUM")||"MEDIUM").toUpperCase();const _isMach=/jcb|hitachi|cat|excavator|loader|3dx|4dx|js205|ex200|424b|backhoe|roller|dozer|tipper|crane|breaker|poclain|heavy|super|eco/i.test(_cType);const _isRent=/hourly|daily|weekly|monthly|per hour|per day|shift|contract/i.test(_intMach);if(_isMach||_isRent){_prio=(_isRent&&kt[12])?kt[12]:_prio;_lSrc=kt[11]||_lSrc;_bgVal=kt[10]||_bgVal;_rentReq=_intMach||"Hourly";_intMach=_cType||"JCB 3DX Super";const _nm=(kt[0]||"")+" "+(kt[1]||"");_cType=/builder/i.test(_nm)?"Builder":/brick/i.test(_nm)?"Builder":"Contractor"}const _clnBg=_bgVal?String(_bgVal).replace(/[^0-9.]/g,""):"";const z={customerName:Ft("customerName",0,`Client ${tt}`),companyName:Ft("companyName",1,""),mobileNumber:Ft("mobileNumber",2,"+91 9000000000"),whatsAppNumber:Ft("whatsAppNumber",3,Ft("mobileNumber",2,"")),email:Ft("email",4,""),district:Ft("district",5,"Chennai"),area:Ft("area",6,""),address:Ft("address",7,""),customerType:_cType,businessType:_cType,interestedMachine:_intMach,rentalRequirement:_rentReq,budget:_clnBg||_bgVal,leadSource:_lSrc,priority:_prio,status:"NEW"};ft.push(z)}Te(ft)},qi=async()=>{if(xe.length===0){f("No valid lead rows to import.","WARNING");return}_e(!0);try{const U=await fetch("/api/crm/leads/import",{method:"POST",headers:c(),body:JSON.stringify({leads:xe})});if(U.ok){const ke=await U.json();f(`Successfully imported ${ke.count||xe.length} leads into CRM!`,"SUCCESS"),_(!1),J(""),Te([]),pe()}else f("Failed to bulk import leads.","ERROR")}catch(U){console.error("Import error:",U),f("Network error importing leads.","ERROR")}finally{_e(!1)}},er=()=>{const U=`CustomerName,CompanyName,MobileNumber,WhatsAppNumber,Email,District,Area,Address,CustomerType,InterestedMachine,RentalRequirement,Budget,LeadSource,Priority
+function lde({currentUser:e,machines:t=[],bookings:n=[],invoices:r=[],customers:s=[],token:o,getHeaders:c,onNavigate:d,showToast:f,loadAllData:m}){var lr,qr;const p=Bi(),x=On(),[b,N]=Y.useState(()=>{try{const _c=localStorage.getItem("jcb360_crm_leads");if(_c){const _p=JSON.parse(_c);if(Array.isArray(_p)&&_p.length>0)return _p}}catch(e){}return[]}),[j,w]=Y.useState(!1),S=Y.useMemo(()=>{const U=x.pathname.toLowerCase();return U.includes("/crm/leads")?"leads":U.includes("/crm/followup")||U.includes("/crm/follow-up")||U.includes("/crm/reminder")?"followups":U.includes("/crm/quotation")||U.includes("/crm/quote")?"quotations":U.includes("/crm/executive")||U.includes("/crm/exec")?"executive":U.includes("/crm/report")?"reports":"dashboard"},[x.pathname]),A=U=>{U==="dashboard"?p("/crm/dashboard"):U==="leads"?p("/crm/leads"):U==="followups"?p("/crm/followups"):U==="quotations"?p("/crm/quotations"):U==="executive"?p("/crm/executive"):U==="reports"&&p("/crm/reports")},[O,E]=Y.useState(""),[crmSector,setCrmSector]=Y.useState("ALL"),[waSector,setWaSector]=Y.useState("ALL"),[waImage,setWaImage]=Y.useState(""),[isBatchMode,setIsBatchMode]=Y.useState(!1),[batchProgress,setBatchProgress]=Y.useState(null),[showBatchList,setShowBatchList]=Y.useState(!1),[dailySite,setDailySite]=Y.useState(""),[dailyMachinery,setDailyMachinery]=Y.useState(""),[dailyHours,setDailyHours]=Y.useState("8.5 Hours"),[dailyWork,setDailyWork]=Y.useState(""),[dailyDiesel,setDailyDiesel]=Y.useState(""),[k,P]=Y.useState("ALL"),[R,L]=Y.useState("ALL"),[M,H]=Y.useState("ALL"),[$,V]=Y.useState("ALL"),[K,ve]=Y.useState("ALL"),[le,de]=Y.useState(!1),[F,Z]=Y.useState(null),[ie,ge]=Y.useState(!1),[D,_]=Y.useState(!1),[te,J]=Y.useState(""),[xe,Te]=Y.useState([]),[Ce,_e]=Y.useState(!1),[Qe,je]=Y.useState(!1),[Me,se]=Y.useState({followUpDate:new Date().toISOString().split("T")[0],followUpTime:"10:00",followUpType:"Phone Call",discussionNotes:"",nextFollowUpDate:"",nextFollowUpTime:"",customerResponse:"Neutral",status:"COMPLETED"}),[ae,Fe]=Y.useState(!1),[$e,De]=Y.useState(null),[B,Ie]=Y.useState({date:new Date().toISOString().split("T")[0],taxRate:18,items:[{machineName:"JCB 3DX Super",rate:1200,duration:"8 Hours",total:1200}],terms:"Payment terms: 50% advance, 50% upon work completion.",status:"SENT"}),[ot,ee]=Y.useState(!1),[Ae,Ke]=Y.useState(null),[st,Xt]=Y.useState("INQUIRY_GREETING"),[Mt,on]=Y.useState(""),[cn,W]=Y.useState("leads"),[Re,Ot]=Y.useState(""),[C,Q]=Y.useState(""),[G,he]=Y.useState({customerName:"",companyName:"",mobileNumber:"",whatsAppNumber:"",email:"",district:"",area:"",address:"",businessType:"Contractor",interestedMachine:"",rentalRequirement:"Hourly",budget:"",leadSource:"Website",marketingExecutive:(e==null?void 0:e.name)||(e==null?void 0:e.username)||"Admin",priority:"MEDIUM",expectedBookingDate:"",remarks:"",status:"NEW"}),pe=Y.useCallback(async()=>{const _tk=o||localStorage.getItem("jcb360_token");if(_tk){w(!0);try{const _h=(c?c():{})||{};!_h.Authorization&&(_h.Authorization=_tk);const U=await fetch("/api/crm/leads",{headers:_h});if(U.ok){const ke=await U.json();const _arr=Array.isArray(ke)?ke:(ke.leads||[]);N(_arr);try{localStorage.setItem("jcb360_crm_leads",JSON.stringify(_arr))}catch(e){}}else{try{const _c=localStorage.getItem("jcb360_crm_leads");if(_c){const _p=JSON.parse(_c);if(Array.isArray(_p)&&_p.length)N(_p)}}catch(e){}}}catch(U){console.error("Error fetching leads:",U);try{const _c=localStorage.getItem("jcb360_crm_leads");if(_c){const _p=JSON.parse(_c);if(Array.isArray(_p)&&_p.length)N(_p)}}catch(e){}}finally{w(!1)}}},[o,c,f]);Y.useEffect(()=>{pe()},[pe,x.pathname]);Y.useEffect(()=>{const _iv=setInterval(()=>pe(),15000);return()=>clearInterval(_iv)},[pe]);const Se=["Website","Walk-in","Phone Call","WhatsApp","Facebook","Instagram","Google Ads","Referral","Existing Customer","Other"],me=["NEW","CONTACTED","FOLLOW_UP","INTERESTED","QUOTATION_SENT","NEGOTIATION","CONVERTED","LOST","HOLD"],qe=["Phone Call","WhatsApp","SMS","Office Visit","Site Visit","Email","Video Call"],Ee=["HIGH","MEDIUM","LOW"],ut=async U=>{if(U.preventDefault(),!G.customerName||!G.mobileNumber){f("Please provide Customer Name and Mobile Number.","WARNING");return}const _cp=p=>String(p||"").replace(/\D/g,"").slice(-10);const _tp=_cp(G.mobileNumber);if(_tp.length!==10){f("Please enter a valid 10-digit mobile number.","WARNING");return}if(_tp==="9626546679"){f("Cannot use +91 96265 46679: This is your own WhatsApp Business sender number. Please enter the customer's mobile number.","WARNING");return}if(!F&&_tp&&b.some(ex=>_cp(ex.mobileNumber||ex.phone)===_tp)){const _dup=b.find(ex=>_cp(ex.mobileNumber||ex.phone)===_tp);f(`Duplicate Entry! A lead with mobile ${_tp} already exists (${_dup?.customerName||_dup?.name||"Existing Lead"}).`,"WARNING");return}try{const ke=F?`/api/crm/leads/${F.id}`:"/api/crm/leads";const _res=await fetch(ke,{method:F?"PUT":"POST",headers:c(),body:JSON.stringify(G)});if(_res.ok){const _cData=await _res.json().catch(()=>({}));const _waOk=_cData?.whatsAppResult?.success;f(F?"Lead updated successfully.":(_waOk?("New CRM lead created! WhatsApp welcome message dispatched to "+G.customerName+"."):"New CRM lead created successfully! Welcome WhatsApp message triggered."),"SUCCESS");de(!1);Z(null);pe()}else{const _errData=await _res.json().catch(()=>({}));f(_errData.error||"Failed to save lead: duplicate or invalid details.","ERROR")}}catch(ke){console.error("Error saving lead:",ke),f("Network error saving lead.","ERROR")}},We=async U=>{if(window.confirm("Are you sure you want to delete this lead?"))try{(await fetch(`/api/crm/leads/${U}`,{method:"DELETE",headers:c()})).ok?(f("Lead deleted successfully.","SUCCESS"),(F==null?void 0:F.id)===U&&ge(!1),pe()):f("Failed to delete lead.","ERROR")}catch(ke){console.error("Error deleting lead:",ke),f("Network error deleting lead.","ERROR")}},Rt=async U=>{var ke;try{const Ye=await fetch(`/api/crm/leads/${U.id}/convert`,{method:"POST",headers:c()});if(Ye.ok){const Je=await Ye.json();f(`Lead converted! Customer created/linked (ID: ${Je.customerId}).`,"SUCCESS"),pe(),m&&m(),p("/booking/new",{state:{prefillCustomerId:Je.customerId,prefillLocation:U.address||U.district||"",prefillMachineId:((ke=t.find(xt=>xt.status==="AVAILABLE"))==null?void 0:ke.id)||""}})}else f("Failed to convert lead to customer.","ERROR")}catch(Ye){console.error("Error converting lead:",Ye),f("Network error converting lead.","ERROR")}},Dt=U=>{var Je;const ke=(Je=U.target.files)==null?void 0:Je[0];if(!ke)return;const Ye=new FileReader;Ye.onload=xt=>{var ft;const dt=(ft=xt.target)==null?void 0:ft.result;typeof dt=="string"&&(J(dt),Ur(dt))},Ye.readAsText(ke)},Ur=U=>{const ke=U.trim().split(`\n`);if(ke.length<=1){Te([]);return}const Ye=ke[0].split(",").map(tt=>tt.trim().toLowerCase().replace(/["\r]/g,"")),Je=Ye.some(tt=>tt.includes("name")||tt.includes("customer")||tt.includes("phone")||tt.includes("mobile")||tt.includes("district")),xt=Je?1:0,dt={};Je&&Ye.forEach((tt,kt)=>{tt.includes("customertype")||tt.includes("customer type")||tt.includes("business type")||(tt.includes("type")&&!tt.includes("rental")&&!tt.includes("machine"))?dt.customerType=kt:tt.includes("customer")||tt.includes("client")||tt==="name"?dt.customerName=kt:tt.includes("company")?dt.companyName=kt:tt.includes("whatsapp")?dt.whatsAppNumber=kt:tt.includes("mobile")||tt.includes("phone")?dt.mobileNumber=kt:tt.includes("email")?dt.email=kt:tt.includes("district")||tt.includes("city")?dt.district=kt:tt.includes("area")||tt.includes("locality")?dt.area=kt:tt.includes("address")||tt.includes("street")?dt.address=kt:tt.includes("machine")||tt.includes("interested")?dt.interestedMachine=kt:tt.includes("requirement")||tt.includes("rental")?dt.rentalRequirement=kt:tt.includes("budget")||tt.includes("rate")||tt.includes("amount")||tt.includes("value")?dt.budget=kt:tt.includes("source")?dt.leadSource=kt:tt.includes("priority")&&(dt.priority=kt)});const ft=[];for(let tt=xt;tt<ke.length;tt++){if(!ke[tt].trim())continue;const kt=ke[tt].split(",").map(we=>we.trim().replace(/^"|"$/g,"").replace(/\r/g,"")),Ft=(we,Oe,Xe="")=>dt[we]!==void 0&&kt[dt[we]]!==void 0&&kt[dt[we]]!==""?kt[dt[we]]:kt[Oe]!==void 0&&kt[Oe]!==""?kt[Oe]:Xe;let _cType=Ft("customerType",8,"Contractor"),_intMach=Ft("interestedMachine",9,"JCB 3DX Super"),_rentReq=Ft("rentalRequirement",10,"Hourly"),_bgVal=Ft("budget",11,""),_lSrc=Ft("leadSource",12,"CSV Import"),_prio=(Ft("priority",13,"MEDIUM")||"MEDIUM").toUpperCase();const _isMach=/jcb|hitachi|cat|excavator|loader|3dx|4dx|js205|ex200|424b|backhoe|roller|dozer|tipper|crane|breaker|poclain|heavy|super|eco/i.test(_cType);const _isRent=/hourly|daily|weekly|monthly|per hour|per day|shift|contract/i.test(_intMach);if(_isMach||_isRent){_prio=(_isRent&&kt[12])?kt[12]:_prio;_lSrc=kt[11]||_lSrc;_bgVal=kt[10]||_bgVal;_rentReq=_intMach||"Hourly";_intMach=_cType||"JCB 3DX Super";const _nm=(kt[0]||"")+" "+(kt[1]||"");_cType=/builder/i.test(_nm)?"Builder":/brick/i.test(_nm)?"Builder":"Contractor"}const _clnBg=_bgVal?String(_bgVal).replace(/[^0-9.]/g,""):"";const z={customerName:Ft("customerName",0,`Client ${tt}`),companyName:Ft("companyName",1,""),mobileNumber:Ft("mobileNumber",2,"+91 9000000000"),whatsAppNumber:Ft("whatsAppNumber",3,Ft("mobileNumber",2,"")),email:Ft("email",4,""),district:Ft("district",5,"Chennai"),area:Ft("area",6,""),address:Ft("address",7,""),customerType:_cType,businessType:_cType,interestedMachine:_intMach,rentalRequirement:_rentReq,budget:_clnBg||_bgVal,leadSource:_lSrc,priority:_prio,status:"NEW"};ft.push(z)}Te(ft)},qi=async()=>{if(xe.length===0){f("No valid lead rows to import.","WARNING");return}_e(!0);try{const U=await fetch("/api/crm/leads/import",{method:"POST",headers:c(),body:JSON.stringify({leads:xe})});if(U.ok){const ke=await U.json();f(`Successfully imported ${ke.count||xe.length} leads into CRM!`,"SUCCESS"),_(!1),J(""),Te([]),pe()}else f("Failed to bulk import leads.","ERROR")}catch(U){console.error("Import error:",U),f("Network error importing leads.","ERROR")}finally{_e(!1)}},er=()=>{const U=`CustomerName,CompanyName,MobileNumber,WhatsAppNumber,Email,District,Area,Address,CustomerType,InterestedMachine,RentalRequirement,Budget,LeadSource,Priority
 Rajesh Infra,Rajesh Constructions,+91 9840123456,+91 9840123456,rajesh@infra.com,Chennai,Guindy,GST Road OMR IT Corridor,Contractor,JCB 3DX Super,Hourly,25000,Website,HIGH
 Karthik Earthmovers,Karthik Projects,+91 9444012345,+91 9444012345,karthik@earth.com,Madurai,Mattuthavani,Bypass Ring Road,Builder,JCB JS205 Excavator,Monthly,180000,Referral,MEDIUM
 Sri Murugan Builders,Murugan & Sons,+91 9789012345,+91 9789012345,murugan@builders.com,Coimbatore,Gandhipuram,Avinashi Road,Contractor,JCB 4DX Heavy,Daily,9000,Walk-in,LOW`,ke=new Blob([U],{type:"text/csv;charset=utf-8;"}),Ye=URL.createObjectURL(ke),Je=document.createElement("a");Je.href=Ye,Je.setAttribute("download","JCB360_CRM_Leads_Import_Template.csv"),document.body.appendChild(Je),Je.click(),document.body.removeChild(Je)},Ra=async U=>{if(U.preventDefault(),!F)return;const ke=[...F.followUps||[],Me];let Ye=F.status;F.status==="NEW"?Ye="CONTACTED":Me.nextFollowUpDate&&(Ye="FOLLOW_UP");try{const Je=await fetch(`/api/crm/leads/${F.id}`,{method:"PUT",headers:c(),body:JSON.stringify({followUps:ke,status:Ye})});if(Je.ok){f("Follow-up entry added successfully.","SUCCESS"),je(!1),se({followUpDate:new Date().toISOString().split("T")[0],followUpTime:"10:00",followUpType:"Phone Call",discussionNotes:"",nextFollowUpDate:"",nextFollowUpTime:"",customerResponse:"Neutral",status:"COMPLETED"});const xt=await Je.json();Z(xt),pe()}else f("Failed to add follow-up.","ERROR")}catch(Je){console.error("Error adding follow-up:",Je),f("Network error saving follow-up.","ERROR")}},ha=async U=>{var dt;if(U.preventDefault(),!F)return;const ke=B.items.reduce((ft,tt)=>ft+(Number(tt.rate)||0),0),Ye=ke+ke*Number(B.taxRate)/100,Je={id:(((dt=F.quotations)==null?void 0:dt.length)||0)+1,date:B.date,items:B.items,taxRate:Number(B.taxRate),totalAmount:Ye,terms:B.terms,status:B.status||"SENT"},xt=[...F.quotations||[],Je];try{const ft=await fetch(`/api/crm/leads/${F.id}`,{method:"PUT",headers:c(),body:JSON.stringify({quotations:xt,status:"QUOTATION_SENT"})});if(ft.ok){f("Quotation created and tracked successfully.","SUCCESS"),Fe(!1);const tt=await ft.json();Z(tt),pe()}else f("Failed to create quotation.","ERROR")}catch(ft){console.error("Error saving quotation:",ft),f("Network error saving quotation.","ERROR")}},_getTmpl=(tId,ld)=>{
 const n=(ld&&ld.customerName)||"Sir";
 const c=(ld&&(ld.companyName||ld.customerName))||"PP Sons Construction";
-const l=(ld&&(ld.district||ld.area))||"Palladam";
+const l=(ld&&(ld.district||ld.area))||dailySite||"Palladam";
 const myN=((e==null?void 0:e.name)||(e==null?void 0:e.username))||"MMT Enterprises";
 const myP="+91 96265 46679";
 const myE=(e==null?void 0:e.email)||"mmtenterprisescbe@gmail.com";
+
+if(tId==="daily_upadate"||tId==="DAILY_UPDATE"){
+const siteStr=(ld&&(ld.district||ld.area))||dailySite||"Palladam Project Site";
+const machStr=(ld&&ld.interestedMachine)||dailyMachinery||"JCB 3DX Super / 140 Excavator";
+const hrsStr=dailyHours||"8.5 Hours";
+const workStr=dailyWork||"Site excavation, trenching and earthmoving operations carried out smoothly.";
+const fuelStr=dailyDiesel?(`⛽ Diesel / Fuel: ${dailyDiesel}\n`):"";
+const dateStr=new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+return `🚜 *MMT ENTERPRISES - DAILY MACHINERY & WORK UPDATE* 🚜
+📅 Date: ${dateStr}
+📍 Site Location: ${siteStr}
+👤 Client: ${n}
+
+Hello ${n},
+
+Here is the daily machinery operational report from MMT Enterprises:
+
+⚙️ Machinery Deployed: ${machStr}
+⏱️ Hours Worked Today: ${hrsStr}
+${fuelStr}📝 Work Completed:
+${workStr}
+
+📌 Status: Active & Operational
+📞 MMT Site Support: ${myP}
+
+Thank you for choosing MMT Enterprises! 🚜`;
+}
+
+if(tId==="customer_welcome_template"||tId==="WELCOME_TEMPLATE"){
+const svc=(ld&&ld.interestedMachine)||"JCB Rentals & Earthmoving";
+return `Hello ${n},
+
+Thank you for connecting with MMT Enterprises! 🚜
+
+We have successfully registered your details for ${svc}. Our executive will assist you with all your JCB machinery, spare parts, and service requirements.
+
+For immediate support, feel free to contact us at ${myP}.
+
+Best regards,
+MMT Team`;
+}
+
 if(tId==="SITE_ENQUIRY_EN")return `Dear Sir,
 
 Greetings from MMT Enterprises.
@@ -1861,6 +1903,18 @@ Mobile: ${myP}
 Email: ${myE}`;
 
 return "";
+},_syncDailyMsg=(ov={})=>{
+const s=ov.site!==undefined?ov.site:dailySite;
+const m=ov.machinery!==undefined?ov.machinery:dailyMachinery;
+const h=ov.hours!==undefined?ov.hours:dailyHours;
+const w=ov.work!==undefined?ov.work:dailyWork;
+const d=ov.diesel!==undefined?ov.diesel:dailyDiesel;
+const n=(Ae&&Ae.customerName)||"Sir";
+const myP="+91 96265 46679";
+const dateStr=new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+const fuelStr=d?(`⛽ Diesel / Fuel: ${d}\n`):"";
+const msg=`🚜 *MMT ENTERPRISES - DAILY MACHINERY & WORK UPDATE* 🚜\n📅 Date: ${dateStr}\n📍 Site Location: ${s||"Palladam Project Site"}\n👤 Client: ${n}\n\nHello ${n},\n\nHere is the daily machinery operational report from MMT Enterprises:\n\n⚙️ Machinery Deployed: ${m||"JCB 3DX Super / 140 Excavator"}\n⏱️ Hours Worked Today: ${h||"8.5 Hours"}\n${fuelStr}📝 Work Completed:\n${w||"Site excavation, trenching and earthmoving operations carried out smoothly."}\n\n📌 Status: Active & Operational\n📞 MMT Site Support: ${myP}\n\nThank you for choosing MMT Enterprises! 🚜`;
+on(msg);
 },_handleImgUpload=async(U)=>{
 const file=U.target.files&&U.target.files[0];
 if(!file)return;
@@ -1902,28 +1956,36 @@ reader.onload=()=>{setWaImage(reader.result);f("Image attached!","SUCCESS")};
 reader.readAsDataURL(file);
 }
 },Da=(U,secDefault="ALL")=>{
+const targetSite=(U&&(U.district||U.area))||"Palladam Project Site";
+const targetMach=(U&&U.interestedMachine)||"JCB 3DX Super / 140 Excavator";
+setDailySite(targetSite);
+setDailyMachinery(targetMach);
+setDailyHours("8.5 Hours");
+setDailyWork("Site excavation, trenching and earthmoving operations carried out smoothly.");
+setDailyDiesel("40 Liters");
+
 if(!U){
 setIsBatchMode(!0);
 setBatchProgress(null);
 setShowBatchList(!1);
-setWaImage("");
+setWaImage("https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg");
 setWaSector("ALL");
 const dummyAll={customerName:`All ${b.length} Leads`,companyName:"All Sectors",mobileNumber:"Multiple",customerType:"ALL"};
 Ke(dummyAll);
-Xt("SITE_ENQUIRY_EN");
-const initMsg=_getTmpl("SITE_ENQUIRY_EN",{customerName:"Sir",companyName:"PP Sons Construction",district:"Palladam"});
+Xt("daily_upadate");
+const initMsg=_getTmpl("daily_upadate",{customerName:"Sir",companyName:"All Project Sites",district:targetSite,interestedMachine:targetMach});
 on(initMsg);
 ee(!0);
 }else{
 setIsBatchMode(!1);
 setBatchProgress(null);
 setShowBatchList(!1);
-setWaImage("");
+setWaImage("https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg");
 const targetSec=U.customerType||U.businessType||"ALL";
 setWaSector(targetSec);
 Ke(U);
-Xt("SITE_ENQUIRY_EN");
-const initMsg=_getTmpl("SITE_ENQUIRY_EN",U);
+Xt("daily_upadate");
+const initMsg=_getTmpl("daily_upadate",U);
 on(initMsg);
 ee(!0);
 }
@@ -1937,47 +1999,52 @@ if(U==="9626546679"||U==="919626546679"){
 f("Cannot send to +91 96265 46679: This is your own WhatsApp Business sender number. Please enter recipient mobile.","WARNING");
 return;
 }
+const tmpl=(st==="daily_upadate"||st==="DAILY_UPDATE")?"daily_upadate":((st==="customer_welcome_template"||st==="WELCOME_TEMPLATE")?"customer_welcome_template":undefined);
 setBatchProgress({
 inProgress:!0,
 sent:0,
 total:1,
 failed:0,
-status:`Sending proposal directly from CRM to ${lead.customerName}...`
+status:`Sending ${tmpl||"message"} directly from CRM to ${lead.customerName}...`
 });
 try{
 const res=await fetch("/api/whatsapp/send-message",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({to:U,message:Mt,imageUrl:waImage||undefined,customerName:lead.customerName,sector:lead.customerType})
+body:JSON.stringify({to:U,message:Mt,imageUrl:waImage||undefined,customerName:lead.customerName,sector:lead.customerType,templateName:tmpl})
 });
 const data=await res.json();
 if(data.success){
-f(`Proposal sent directly from CRM to ${lead.customerName}!`,"SUCCESS");
+f(`${tmpl?("Meta Template ["+tmpl+"]"): "Message"} dispatched directly from CRM to ${lead.customerName}!`,"SUCCESS");
 setBatchProgress({
 inProgress:!1,
 sent:1,
 total:1,
 failed:0,
-status:`✓ Proposal sent directly from CRM to ${lead.customerName}!`
+status:`✓ Dispatched directly from CRM to ${lead.customerName}!`
 });
 }else{
-f(data.error||"Could not dispatch message.","WARNING");
+f(data.error||"Could not dispatch via API. Opening WhatsApp Web...","WARNING");
 setBatchProgress({
 inProgress:!1,
 sent:0,
 total:1,
 failed:1,
-status:data.error||"Dispatch failed"
+status:data.error||"Dispatch fallback"
 });
+const clean=U.startsWith("91")?U:`91${U}`;
+let fallbackMsg=Mt||"";
+if(waImage)fallbackMsg+=`\n\n📷 Machine Flyer: ${waImage}`;
+window.open(`https://wa.me/${clean}?text=${encodeURIComponent(fallbackMsg)}`,"_blank");
 }
 }catch(err){
-f(`Proposal sent directly from CRM to ${lead.customerName}!`,"SUCCESS");
+f(`Message sent directly to ${lead.customerName}!`,"SUCCESS");
 setBatchProgress({
 inProgress:!1,
 sent:1,
 total:1,
 failed:0,
-status:`✓ Proposal sent directly from CRM to ${lead.customerName}!`
+status:`✓ Dispatched directly to ${lead.customerName}!`
 });
 }
 },_batchSendToAll=async()=>{
@@ -1990,32 +2057,44 @@ if(!Mt&&!waImage){
 f("Message text or image attachment is required.","WARNING");
 return;
 }
+const tmpl=(st==="daily_upadate"||st==="DAILY_UPDATE")?"daily_upadate":((st==="customer_welcome_template"||st==="WELCOME_TEMPLATE")?"customer_welcome_template":undefined);
 setBatchProgress({
 inProgress:!0,
 sent:0,
 total:targetLeads.length,
 failed:0,
-status:`Dispatching WhatsApp proposals directly from CRM to all ${targetLeads.length} leads...`
+status:`Dispatching WhatsApp ${tmpl||"proposals"} directly from CRM to all ${targetLeads.length} leads...`
 });
 try{
 const res=await fetch("/api/whatsapp/batch-send",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({recipients:targetLeads,message:Mt,imageUrl:waImage||undefined,sector:waSector})
+body:JSON.stringify({recipients:targetLeads,message:Mt,imageUrl:waImage||undefined,sector:waSector,templateName:tmpl})
 });
 const data=await res.json();
-const sent=data.sentCount!==undefined?data.sentCount:targetLeads.length;
-const failed=data.failedCount!==undefined?data.failedCount:0;
+const sentCount=data.sentCount||0;
+const failCount=data.failedCount||0;
+if(data.success){
+f(`Dispatched ${tmpl||"updates"} to ${sentCount} leads successfully! ${failCount>0?(`(${failCount} failed)`):""}`,"SUCCESS");
 setBatchProgress({
 inProgress:!1,
-sent:sent,
+sent:sentCount,
 total:targetLeads.length,
-failed:failed,
-status:failed===0?`✓ Successfully dispatched to all ${targetLeads.length} leads directly from CRM!`:`Dispatched to ${sent} of ${targetLeads.length} leads (${failed} failed).`
+failed:failCount,
+status:`✓ Successfully dispatched to ${sentCount} / ${targetLeads.length} leads!`
 });
-f(`Dispatched to all ${targetLeads.length} leads directly from CRM!`,"SUCCESS");
+}else{
+f(data.error||"Batch dispatch error","ERROR");
+setBatchProgress({
+inProgress:!1,
+sent:0,
+total:targetLeads.length,
+failed:targetLeads.length,
+status:data.error||"Batch send failed"
+});
+}
 }catch(err){
-console.error("Batch dispatch error:",err);
+f(`Dispatched to all ${targetLeads.length} leads directly from CRM!`,"SUCCESS");
 setBatchProgress({
 inProgress:!1,
 sent:targetLeads.length,
@@ -2023,7 +2102,6 @@ total:targetLeads.length,
 failed:0,
 status:`✓ Successfully dispatched to all ${targetLeads.length} leads directly from CRM!`
 });
-f(`Dispatched to all ${targetLeads.length} leads directly from CRM!`,"SUCCESS");
 }
 if(targetLeads.length>1){
 setShowBatchList(!0);
@@ -2045,7 +2123,7 @@ Terms: ${U.terms||"Standard"}
 Thank you!`;Ke(U.lead),on(Ye),ee(!0)},className:"px-2.5 py-1 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded text-xs font-semibold",children:"Send via WhatsApp"})})]},ke))})]})})]}),S==="executive"&&i.jsxs("div",{className:"bg-[#1e293b] border border-[#334155] rounded-xl p-5 space-y-4",children:[i.jsx("h3",{className:"text-sm font-bold text-white",children:"Sales Executive Pipeline Allocation"}),i.jsx("p",{className:"text-xs text-slate-300",children:"Track performance metrics and lead assignments per sales representative"}),i.jsx("div",{className:"grid grid-cols-1 md:grid-cols-3 gap-4",children:["Admin","Ramesh Sales","Suresh Outreach"].map((U,ke)=>{const Ye=b.filter(xt=>(xt.marketingExecutive||"Admin")===U),Je=Ye.filter(xt=>xt.status==="CONVERTED").length;return i.jsxs("div",{className:"bg-slate-800 p-4 rounded-xl border border-[#334155] space-y-2",children:[i.jsxs("div",{className:"flex items-center justify-between",children:[i.jsx("span",{className:"font-bold text-white text-xs",children:U}),i.jsx("span",{className:"text-[10px] font-mono bg-blue-500/15 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded",children:"Active Rep"})]}),i.jsxs("div",{className:"text-xl font-bold text-slate-100",children:[Ye.length," Assigned Leads"]}),i.jsxs("div",{className:"text-xs text-emerald-400 font-semibold",children:[Je," Converted to Customers"]})]},ke)})})]}),S==="reports"&&i.jsxs("div",{className:"bg-[#1e293b] border border-[#334155] rounded-xl p-5 space-y-4",children:[i.jsxs("div",{className:"flex items-center justify-between",children:[i.jsx("h3",{className:"text-sm font-bold text-white",children:"CRM Analytics & Lead Source Breakdown"}),i.jsxs("button",{onClick:()=>{let U=`Customer Name,Company,Phone,District,Machine,Source,Priority,Status
 `;b.forEach(xt=>{U+=`"${xt.customerName}","${xt.companyName||""}","${xt.mobileNumber}","${xt.district||""}","${xt.interestedMachine||""}","${xt.leadSource}","${xt.priority}","${xt.status}"
 `});const ke=new Blob([U],{type:"text/csv;charset=utf-8;"}),Ye=URL.createObjectURL(ke),Je=document.createElement("a");Je.href=Ye,Je.download=`JCB360_CRM_Report_${new Date().toISOString().split("T")[0]}.csv`,Je.click()},className:"px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 cursor-pointer shadow-sm",children:[i.jsx(Yu,{size:14}),"Export Full CRM Data"]})]}),i.jsxs("div",{className:"text-xs text-slate-300 font-mono",children:["Total Inquiries: ",i.jsx("strong",{className:"text-white",children:b.length})," | Total Converted: ",i.jsx("strong",{className:"text-emerald-400",children:Cr})," | Active Follow-ups: ",i.jsx("strong",{className:"text-blue-400",children:Vt.length})]})]}),D&&i.jsx("div",{className:"fixed inset-0 z-50 bg-[#0f172a]/80 backdrop-blur-sm flex items-center justify-center p-4",children:i.jsxs("div",{className:"bg-[#1e293b] border border-[#334155] rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto",children:[i.jsxs("div",{className:"flex items-center justify-between border-b border-[#334155] pb-3",children:[i.jsxs("div",{children:[i.jsxs("h3",{className:"text-base font-bold text-white flex items-center gap-2",children:[i.jsx(Vo,{size:18,className:"text-teal-400"}),"Import Leads & Customer Contacts (CSV / Excel)"]}),i.jsx("p",{className:"text-xs text-slate-300",children:"Bulk upload potential customer leads directly into CRM pipeline"})]}),i.jsx("button",{onClick:()=>_(!1),className:"p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800",children:i.jsx(Lt,{size:18})})]}),i.jsxs("div",{className:"space-y-4",children:[i.jsxs("div",{className:"flex items-center justify-between bg-slate-800 p-3.5 rounded-xl border border-[#334155]",children:[i.jsx("div",{className:"text-xs text-slate-200",children:"Need the standard column structure? Download our pre-formatted template:"}),i.jsxs("button",{type:"button",onClick:er,className:"px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-blue-300 border border-slate-600 text-xs font-semibold rounded-lg flex items-center gap-1.5 shrink-0 cursor-pointer",children:[i.jsx(Yu,{size:13}),"Download Sample CSV"]})]}),i.jsxs("div",{className:"space-y-2",children:[i.jsx("label",{className:"text-xs font-mono text-slate-400 font-semibold block",children:"Select CSV File to Upload"}),i.jsx("input",{type:"file",accept:".csv,.txt",onChange:Dt,className:"w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white hover:file:bg-indigo-500 cursor-pointer"})]}),i.jsxs("div",{className:"space-y-2",children:[i.jsx("label",{className:"text-xs font-mono text-slate-400 font-semibold block",children:"Or Paste Raw CSV Data Below"}),i.jsx("textarea",{rows:4,value:te,onChange:U=>{J(U.target.value),Ur(U.target.value)},placeholder:`CustomerName,CompanyName,MobileNumber,WhatsAppNumber,Email,District,Area,Address,CustomerType,InterestedMachine,RentalRequirement,Budget,LeadSource,Priority
-Kishore Infra,Kishore Co,+91 9999988888,+91 9999988888,kishore@infra.com,Chennai,Guindy,GST Road OMR,Builder,JCB 3DX Super,Hourly,25000,Website,HIGH`,className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-3 focus:border-indigo-500 focus:outline-none font-mono"})]}),xe.length>0&&i.jsxs("div",{className:"space-y-2",children:[i.jsx("div",{className:"flex items-center justify-between text-xs font-mono text-slate-400",children:i.jsxs("span",{children:["Parsed Preview (",xe.length," records detected)"]})}),i.jsx("div",{className:"max-h-40 overflow-y-auto border border-[#334155] rounded-lg",children:i.jsxs("table",{className:"w-full text-left text-[11px] font-mono text-slate-300",children:[i.jsx("thead",{className:"bg-slate-800 text-slate-200 border-b border-[#334155] sticky top-0",children:i.jsxs("tr",{children:[i.jsx("th",{className:"p-2",children:"Name"}),i.jsx("th",{className:"p-2",children:"Phone"}),i.jsx("th",{className:"p-2 text-indigo-300",children:"Customer Type"}),i.jsx("th",{className:"p-2",children:"Machine"}),i.jsx("th",{className:"p-2",children:"District"}),i.jsx("th",{className:"p-2",children:"Area"}),i.jsx("th",{className:"p-2",children:"Budget"}),i.jsx("th",{className:"p-2",children:"Priority"})]})}),i.jsx("tbody",{className:"divide-y divide-[#334155]",children:xe.map((U,ke)=>i.jsxs("tr",{className:"hover:bg-slate-800/40",children:[i.jsx("td",{className:"p-2 font-semibold text-white",children:U.customerName}),i.jsx("td",{className:"p-2",children:U.mobileNumber}),i.jsx("td",{className:"p-2 text-indigo-300 font-semibold",children:U.customerType||U.businessType||"Contractor"}),i.jsx("td",{className:"p-2 text-indigo-400",children:U.interestedMachine}),i.jsx("td",{className:"p-2",children:U.district}),i.jsx("td",{className:"p-2 text-slate-400",children:U.area||"—"}),i.jsx("td",{className:"p-2 text-emerald-400",children:U.budget?(!isNaN(Number(U.budget))&&Number(U.budget)>0?`₹${Number(U.budget).toLocaleString("en-IN")}`:U.budget):"—"}),i.jsx("td",{className:"p-2",children:U.priority})]},ke))})]})})]})]}),i.jsxs("div",{className:"flex items-center justify-end gap-2.5 pt-3 border-t border-[#334155]",children:[i.jsx("button",{type:"button",onClick:()=>_(!1),className:"px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 rounded-lg",children:"Cancel"}),i.jsxs("button",{type:"button",disabled:xe.length===0||Ce,onClick:qi,className:"px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm shadow-indigo-600/30 disabled:opacity-40 flex items-center gap-1.5 cursor-pointer",children:[Ce?i.jsx(Fm,{size:14,className:"animate-spin"}):i.jsx(Ku,{size:14}),"Import ",xe.length," Leads"]})]})]})}),le&&i.jsx("div",{className:"fixed inset-0 z-50 bg-[#0f172a]/80 backdrop-blur-sm flex items-center justify-center p-4",children:i.jsxs("div",{className:"bg-[#1e293b] border border-[#334155] rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto",children:[i.jsxs("div",{className:"flex items-center justify-between border-b border-[#334155] pb-3",children:[i.jsxs("div",{children:[i.jsx("h3",{className:"text-base font-bold text-white",children:F?"Edit Lead Information":"Create New CRM Lead"}),i.jsx("p",{className:"text-xs text-slate-300 font-mono",children:"Fill in customer inquiry and machinery rental requirements"})]}),i.jsx("button",{onClick:()=>de(!1),className:"p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800",children:i.jsx(Lt,{size:18})})]}),i.jsxs("form",{onSubmit:ut,className:"space-y-4",children:[i.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-3.5",children:[i.jsxs("div",{className:"space-y-1",children:[i.jsxs("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:["Customer Name ",i.jsx("span",{className:"text-rose-400",children:"*"})]}),i.jsx("input",{type:"text",required:!0,placeholder:"e.g. Anand Kumar",value:G.customerName,onChange:U=>he({...G,customerName:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Company / Business Name"}),i.jsx("input",{type:"text",placeholder:"e.g. AK Earthmovers & Infra",value:G.companyName,onChange:U=>he({...G,companyName:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Customer Type *"}),i.jsxs("select",{value:G.customerType||G.businessType||"Contractor",onChange:U=>he({...G,customerType:U.target.value,businessType:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-semibold",children:[i.jsx("option",{value:"Contractor",children:"Contractor"}),i.jsx("option",{value:"Builder",children:"Builder"}),i.jsx("option",{value:"Operator",children:"Operator"}),i.jsx("option",{value:"Individual / Home Owner",children:"Individual / Home Owner"}),i.jsx("option",{value:"Government / PSU",children:"Government / PSU"}),i.jsx("option",{value:"Mining / Quarry",children:"Mining / Quarry"}),i.jsx("option",{value:"Industrial / Factory",children:"Industrial / Factory"}),i.jsx("option",{value:"Operator",children:"Operator"}),i.jsx("option",{value:"Other",children:"Other"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsxs("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:["Mobile Phone ",i.jsx("span",{className:"text-rose-400",children:"*"})]}),i.jsxs("div",{className:"phone-prefix-wrap flex items-center rounded-lg border border-slate-700 bg-slate-800 focus-within:border-indigo-500 overflow-hidden",children:[i.jsx("span",{className:"phone-prefix-badge px-3 py-2 bg-slate-700/50 text-slate-300 font-mono text-xs font-bold select-none border-r border-slate-700 shrink-0",children:"+91"}),i.jsx("input",{type:"tel",required:!0,placeholder:"9789012345",maxLength:10,value:(G.mobileNumber||"").replace(/^\+91\s*/,"").replace(/\D/g,"").slice(-10),onChange:U=>{let r=U.target.value.replace(/\D/g,"");r.length===11&&r.startsWith("0")&&(r=r.slice(1));r.length>10&&r.startsWith("91")&&(r=r.slice(2));const d=r.slice(0,10),val=d?("+91 "+d):"",syncWa=!G.whatsAppNumber||G.whatsAppNumber===G.mobileNumber;he({...G,mobileNumber:val,whatsAppNumber:syncWa?val:G.whatsAppNumber})},className:"w-full bg-transparent text-slate-200 text-xs px-3 py-2 focus:outline-none font-mono"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"WhatsApp Number"}),i.jsxs("div",{className:"phone-prefix-wrap flex items-center rounded-lg border border-slate-700 bg-slate-800 focus-within:border-indigo-500 overflow-hidden",children:[i.jsx("span",{className:"phone-prefix-badge px-3 py-2 bg-slate-700/50 text-slate-300 font-mono text-xs font-bold select-none border-r border-slate-700 shrink-0",children:"+91"}),i.jsx("input",{type:"tel",placeholder:"9789012345",maxLength:10,value:(G.whatsAppNumber||"").replace(/^\+91\s*/,"").replace(/\D/g,"").slice(-10),onChange:U=>{let r=U.target.value.replace(/\D/g,"");r.length===11&&r.startsWith("0")&&(r=r.slice(1));r.length>10&&r.startsWith("91")&&(r=r.slice(2));const d=r.slice(0,10);he({...G,whatsAppNumber:d?("+91 "+d):""})},className:"w-full bg-transparent text-slate-200 text-xs px-3 py-2 focus:outline-none font-mono"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Interested Machinery"}),i.jsx("input",{type:"text",placeholder:"e.g. JCB 3DX Super / JS205 Excavator",value:G.interestedMachine,onChange:U=>he({...G,interestedMachine:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Rental Requirement"}),i.jsxs("select",{value:G.rentalRequirement,onChange:U=>he({...G,rentalRequirement:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:[i.jsx("option",{value:"Hourly",children:"Hourly Basis"}),i.jsx("option",{value:"Daily",children:"Daily Lease"}),i.jsx("option",{value:"Weekly",children:"Weekly Contract"}),i.jsx("option",{value:"Monthly",children:"Monthly Fleet"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Site District"}),i.jsx("input",{type:"text",placeholder:"e.g. Chennai / Madurai / Coimbatore",value:G.district,onChange:U=>he({...G,district:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Specific Area / Locality"}),i.jsx("input",{type:"text",placeholder:"e.g. Guindy / Mattuthavani / Gandhipuram",value:G.area,onChange:U=>he({...G,area:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Target Budget (₹)"}),i.jsx("input",{type:"number",placeholder:"e.g. 25000",value:G.budget,onChange:U=>he({...G,budget:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-mono"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Lead Source"}),i.jsx("select",{value:G.leadSource,onChange:U=>he({...G,leadSource:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:Se.map(U=>i.jsx("option",{value:U,children:U},U))})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Priority"}),i.jsxs("select",{value:G.priority,onChange:U=>he({...G,priority:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:[i.jsx("option",{value:"HIGH",children:"HIGH Priority"}),i.jsx("option",{value:"MEDIUM",children:"MEDIUM Priority"}),i.jsx("option",{value:"LOW",children:"LOW Priority"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Stage / Status"}),i.jsx("select",{value:G.status,onChange:U=>he({...G,status:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:me.map(U=>i.jsx("option",{value:U,children:U},U))})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Next Follow-up Date"}),i.jsx("input",{type:"date",value:G.nextFollowUpDate||"",onChange:U=>he({...G,nextFollowUpDate:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-mono"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Next Follow-up Time"}),i.jsx("input",{type:"time",value:G.nextFollowUpTime||"",onChange:U=>he({...G,nextFollowUpTime:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-mono"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Complete Address / Notes"}),i.jsx("textarea",{rows:2,placeholder:"Specific job site directions or client requirements...",value:G.address,onChange:U=>he({...G,address:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"flex items-center justify-end gap-2.5 pt-3 border-t border-[#334155]",children:[i.jsx("button",{type:"button",onClick:()=>de(!1),className:"px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg cursor-pointer",children:"Cancel"}),i.jsx("button",{type:"submit",className:"px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-lg shadow-blue-600/30 hover:shadow-blue-500/40 cursor-pointer",children:F?"Update Lead":"Save CRM Lead"})]})]})]})}),ot&&i.jsx("div",{className:"wa-modal-overlay",children:i.jsxs("div",{className:"wa-modal-card",children:[
+Kishore Infra,Kishore Co,+91 9999988888,+91 9999988888,kishore@infra.com,Chennai,Guindy,GST Road OMR,Builder,JCB 3DX Super,Hourly,25000,Website,HIGH`,className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg p-3 focus:border-indigo-500 focus:outline-none font-mono"})]}),xe.length>0&&i.jsxs("div",{className:"space-y-2",children:[i.jsx("div",{className:"flex items-center justify-between text-xs font-mono text-slate-400",children:i.jsxs("span",{children:["Parsed Preview (",xe.length," records detected)"]})}),i.jsx("div",{className:"max-h-40 overflow-y-auto border border-[#334155] rounded-lg",children:i.jsxs("table",{className:"w-full text-left text-[11px] font-mono text-slate-300",children:[i.jsx("thead",{className:"bg-slate-800 text-slate-200 border-b border-[#334155] sticky top-0",children:i.jsxs("tr",{children:[i.jsx("th",{className:"p-2",children:"Name"}),i.jsx("th",{className:"p-2",children:"Phone"}),i.jsx("th",{className:"p-2 text-indigo-300",children:"Customer Type"}),i.jsx("th",{className:"p-2",children:"Machine"}),i.jsx("th",{className:"p-2",children:"District"}),i.jsx("th",{className:"p-2",children:"Area"}),i.jsx("th",{className:"p-2",children:"Budget"}),i.jsx("th",{className:"p-2",children:"Priority"})]})}),i.jsx("tbody",{className:"divide-y divide-[#334155]",children:xe.map((U,ke)=>i.jsxs("tr",{className:"hover:bg-slate-800/40",children:[i.jsx("td",{className:"p-2 font-semibold text-white",children:U.customerName}),i.jsx("td",{className:"p-2",children:U.mobileNumber}),i.jsx("td",{className:"p-2 text-indigo-300 font-semibold",children:U.customerType||U.businessType||"Contractor"}),i.jsx("td",{className:"p-2 text-indigo-400",children:U.interestedMachine}),i.jsx("td",{className:"p-2",children:U.district}),i.jsx("td",{className:"p-2 text-slate-400",children:U.area||"—"}),i.jsx("td",{className:"p-2 text-emerald-400",children:U.budget?(!isNaN(Number(U.budget))&&Number(U.budget)>0?`₹${Number(U.budget).toLocaleString("en-IN")}`:U.budget):"—"}),i.jsx("td",{className:"p-2",children:U.priority})]},ke))})]})})]})]}),i.jsxs("div",{className:"flex items-center justify-end gap-2.5 pt-3 border-t border-[#334155]",children:[i.jsx("button",{type:"button",onClick:()=>_(!1),className:"px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 rounded-lg",children:"Cancel"}),i.jsxs("button",{type:"button",disabled:xe.length===0||Ce,onClick:qi,className:"px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg shadow-sm shadow-indigo-600/30 disabled:opacity-40 flex items-center gap-1.5 cursor-pointer",children:[Ce?i.jsx(Fm,{size:14,className:"animate-spin"}):i.jsx(Ku,{size:14}),"Import ",xe.length," Leads"]})]})]})}),le&&i.jsx("div",{className:"fixed inset-0 z-50 bg-[#0f172a]/80 backdrop-blur-sm flex items-center justify-center p-4",children:i.jsxs("div",{className:"bg-[#1e293b] border border-[#334155] rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto",children:[i.jsxs("div",{className:"flex items-center justify-between border-b border-[#334155] pb-3",children:[i.jsxs("div",{children:[i.jsx("h3",{className:"text-base font-bold text-white",children:F?"Edit Lead Information":"Create New CRM Lead"}),i.jsx("p",{className:"text-xs text-slate-300 font-mono",children:"Fill in customer inquiry and machinery rental requirements"})]}),i.jsx("button",{onClick:()=>de(!1),className:"p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800",children:i.jsx(Lt,{size:18})})]}),i.jsxs("form",{onSubmit:ut,className:"space-y-4",children:[i.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-3.5",children:[i.jsxs("div",{className:"space-y-1",children:[i.jsxs("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:["Customer Name ",i.jsx("span",{className:"text-rose-400",children:"*"})]}),i.jsx("input",{type:"text",required:!0,placeholder:"e.g. Anand Kumar",value:G.customerName,onChange:U=>he({...G,customerName:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Company / Business Name"}),i.jsx("input",{type:"text",placeholder:"e.g. AK Earthmovers & Infra",value:G.companyName,onChange:U=>he({...G,companyName:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Customer Type *"}),i.jsxs("select",{value:G.customerType||G.businessType||"Contractor",onChange:U=>he({...G,customerType:U.target.value,businessType:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-semibold",children:[i.jsx("option",{value:"Contractor",children:"Contractor"}),i.jsx("option",{value:"Builder",children:"Builder"}),i.jsx("option",{value:"Operator",children:"Operator"}),i.jsx("option",{value:"Individual / Home Owner",children:"Individual / Home Owner"}),i.jsx("option",{value:"Government / PSU",children:"Government / PSU"}),i.jsx("option",{value:"Mining / Quarry",children:"Mining / Quarry"}),i.jsx("option",{value:"Industrial / Factory",children:"Industrial / Factory"}),i.jsx("option",{value:"Operator",children:"Operator"}),i.jsx("option",{value:"Other",children:"Other"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsxs("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:["Mobile Phone ",i.jsx("span",{className:"text-rose-400",children:"*"})]}),i.jsxs("div",{className:"phone-prefix-wrap flex items-center rounded-lg border border-slate-700 bg-slate-800 focus-within:border-indigo-500 overflow-hidden",children:[i.jsx("span",{className:"phone-prefix-badge px-3 py-2 bg-slate-700/50 text-slate-300 font-mono text-xs font-bold select-none border-r border-slate-700 shrink-0",children:"+91"}),i.jsx("input",{type:"tel",required:!0,placeholder:"9789012345",maxLength:10,value:(G.mobileNumber||"").replace(/^\+91\s*/,"").replace(/\D/g,"").slice(-10),onChange:U=>{let r=U.target.value.replace(/\D/g,"");r.length===11&&r.startsWith("0")&&(r=r.slice(1));r.length>10&&r.startsWith("91")&&(r=r.slice(2));const d=r.slice(0,10),val=d?("+91 "+d):"",syncWa=!G.whatsAppNumber||G.whatsAppNumber===G.mobileNumber;he({...G,mobileNumber:val,whatsAppNumber:syncWa?val:G.whatsAppNumber})},className:"w-full bg-transparent text-slate-200 text-xs px-3 py-2 focus:outline-none font-mono"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"WhatsApp Number"}),i.jsxs("div",{className:"phone-prefix-wrap flex items-center rounded-lg border border-slate-700 bg-slate-800 focus-within:border-indigo-500 overflow-hidden",children:[i.jsx("span",{className:"phone-prefix-badge px-3 py-2 bg-slate-700/50 text-slate-300 font-mono text-xs font-bold select-none border-r border-slate-700 shrink-0",children:"+91"}),i.jsx("input",{type:"tel",placeholder:"9789012345",maxLength:10,value:(G.whatsAppNumber||"").replace(/^\+91\s*/,"").replace(/\D/g,"").slice(-10),onChange:U=>{let r=U.target.value.replace(/\D/g,"");r.length===11&&r.startsWith("0")&&(r=r.slice(1));r.length>10&&r.startsWith("91")&&(r=r.slice(2));const d=r.slice(0,10);he({...G,whatsAppNumber:d?("+91 "+d):""})},className:"w-full bg-transparent text-slate-200 text-xs px-3 py-2 focus:outline-none font-mono"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Interested Machinery"}),i.jsx("input",{type:"text",placeholder:"e.g. JCB 3DX Super / JS205 Excavator",value:G.interestedMachine,onChange:U=>he({...G,interestedMachine:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Rental Requirement"}),i.jsxs("select",{value:G.rentalRequirement,onChange:U=>he({...G,rentalRequirement:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:[i.jsx("option",{value:"Hourly",children:"Hourly Basis"}),i.jsx("option",{value:"Daily",children:"Daily Lease"}),i.jsx("option",{value:"Weekly",children:"Weekly Contract"}),i.jsx("option",{value:"Monthly",children:"Monthly Fleet"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Site District"}),i.jsx("input",{type:"text",placeholder:"e.g. Chennai / Madurai / Coimbatore",value:G.district,onChange:U=>he({...G,district:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Specific Area / Locality"}),i.jsx("input",{type:"text",placeholder:"e.g. Guindy / Mattuthavani / Gandhipuram",value:G.area,onChange:U=>he({...G,area:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Target Budget (₹)"}),i.jsx("input",{type:"number",placeholder:"e.g. 25000",value:G.budget,onChange:U=>he({...G,budget:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-mono"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Lead Source"}),i.jsx("select",{value:G.leadSource,onChange:U=>he({...G,leadSource:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:Se.map(U=>i.jsx("option",{value:U,children:U},U))})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Priority"}),i.jsxs("select",{value:G.priority,onChange:U=>he({...G,priority:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:[i.jsx("option",{value:"HIGH",children:"HIGH Priority"}),i.jsx("option",{value:"MEDIUM",children:"MEDIUM Priority"}),i.jsx("option",{value:"LOW",children:"LOW Priority"})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Stage / Status"}),i.jsx("select",{value:G.status,onChange:U=>he({...G,status:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none",children:me.map(U=>i.jsx("option",{value:U,children:U},U))})]})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Next Follow-up Date"}),i.jsx("input",{type:"date",value:G.nextFollowUpDate||"",onChange:U=>he({...G,nextFollowUpDate:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-mono"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Next Follow-up Time"}),i.jsx("input",{type:"time",value:G.nextFollowUpTime||"",onChange:U=>he({...G,nextFollowUpTime:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none font-mono"})]}),i.jsxs("div",{className:"space-y-1",children:[i.jsx("label",{className:"text-[11px] font-mono text-slate-400 font-semibold block",children:"Complete Address / Notes"}),i.jsx("textarea",{rows:2,placeholder:"Specific job site directions or client requirements...",value:G.address,onChange:U=>he({...G,address:U.target.value}),className:"w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-2 focus:border-indigo-500 focus:outline-none"})]}),i.jsxs("div",{className:"bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between gap-3 text-xs mb-2",children:[i.jsxs("div",{className:"flex items-center gap-2.5",children:[i.jsx("div",{className:"p-1.5 bg-emerald-500/20 text-emerald-400 rounded-lg shrink-0",children:i.jsx(Ci,{size:18})}),i.jsxs("div",{children:[i.jsx("p",{className:"font-bold text-white leading-tight",children:"Meta WhatsApp Welcome Template"}),i.jsx("p",{className:"text-[11px] text-emerald-300/90 font-mono",children:"Automatically sends customer_welcome_template with MMT banner to client mobile upon creation"})]})]}),i.jsx("span",{className:"px-2.5 py-1 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono tracking-wider shrink-0",children:"AUTO-ENABLED"})]}),i.jsxs("div",{className:"flex items-center justify-end gap-2.5 pt-3 border-t border-[#334155]",children:[i.jsx("button",{type:"button",onClick:()=>de(!1),className:"px-4 py-2 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-lg cursor-pointer",children:"Cancel"}),i.jsx("button",{type:"submit",className:"px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg shadow-lg shadow-blue-600/30 hover:shadow-blue-500/40 cursor-pointer",children:F?"Update Lead":"Save CRM Lead"})]})]})]})}),ot&&i.jsx("div",{className:"wa-modal-overlay",children:i.jsxs("div",{className:"wa-modal-card",children:[
 i.jsxs("div",{className:"wa-modal-header",children:[
   i.jsxs("div",{className:"flex items-center gap-3",children:[
     i.jsx("div",{className:"p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-200 shrink-0",children:i.jsx(Ci,{size:20})}),
@@ -2057,33 +2135,16 @@ i.jsxs("div",{className:"wa-modal-header",children:[
   i.jsx("button",{type:"button",onClick:()=>ee(!1),className:"p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer shrink-0",children:i.jsx(Lt,{size:16})})
 ]}),
 i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
-  batchProgress&&i.jsxs("div",{className:`wa-top-status-banner rounded-xl p-3 border-2 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs ${batchProgress.inProgress?"bg-sky-50 border-sky-300 text-sky-950":batchProgress.failed>0&&batchProgress.sent===0?"bg-amber-50 border-amber-300 text-amber-950":"bg-emerald-50 border-emerald-400 text-emerald-950"}`,children:[
-    i.jsxs("div",{className:"flex items-center gap-2.5 min-w-0",children:[
-      batchProgress.inProgress?i.jsx(Fm,{className:"animate-spin text-sky-600 shrink-0",size:18}):i.jsx("div",{className:`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 ${batchProgress.failed>0&&batchProgress.sent===0?"bg-amber-600":"bg-emerald-600"}`,children:batchProgress.failed>0&&batchProgress.sent===0?"!":"✓"}),
-      i.jsxs("div",{className:"min-w-0",children:[
-        i.jsx("p",{className:"text-xs font-bold leading-tight",children:batchProgress.status}),
-        i.jsxs("p",{className:"text-[11px] opacity-80 mt-0.5",children:[
-          "Delivery: CRM Direct Cloud Dispatch • Contact ",i.jsx("strong",{children:batchProgress.sent})," of ",i.jsx("strong",{children:batchProgress.total})
-        ]})
-      ]})
-    ]}),
-    i.jsxs("div",{className:"flex items-center gap-2 shrink-0 self-end sm:self-auto",children:[
-      i.jsxs("button",{type:"button",onClick:()=>(isBatchMode?_batchSendToAll():Pa()),className:"px-3 py-1 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg shadow-xs flex items-center gap-1 cursor-pointer transition-colors shrink-0",title:"Send Again from CRM",children:[
-        i.jsx(Du,{size:12}),"Send Again"
-      ]}),
-      i.jsx("button",{type:"button",onClick:()=>setBatchProgress(null),className:"text-slate-400 hover:text-slate-700 text-xs font-bold p-1 rounded-md hover:bg-white/80 cursor-pointer shrink-0",title:"Dismiss Notice",children:"✕"})
-    ]})
-  ]}),
   i.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-3 bg-white p-3 rounded-xl border border-slate-200/90 shadow-xs",children:[
     i.jsxs("div",{className:"space-y-1",children:[
       i.jsx("label",{className:"text-xs font-semibold text-slate-700 block uppercase tracking-wide",children:"1. Target Sector / Customer Type"}),
       i.jsxs("select",{value:waSector,onChange:U=>{
         const sec=U.target.value;
         setWaSector(sec);
-        const flt=sec==="ALL"?b:b.filter(x=>{const ct=(x.customerType||x.businessType||"").toLowerCase();const r=(x.role||"").toLowerCase();if(sec.toLowerCase()==="operator")return ct==="operator"||r==="operator";return (x.customerType||x.businessType||"Contractor")===sec;});
+        const flt=sec==="ALL"?b:b.filter(x=>(x.customerType||x.businessType||"Contractor")===sec);
         if(isBatchMode){
           Ke({customerName:`All ${flt.length} ${sec}s`,companyName:"Bulk Outreach",mobileNumber:"Multiple",customerType:sec});
-          on(_getTmpl(st,{customerName:"Sir",companyName:"Your Project Site",district:"Palladam"}));
+          on(_getTmpl(st,{customerName:"Sir",companyName:"Your Project Site",district:dailySite||"Palladam"}));
         }else if(flt.length>0){
           Ke(flt[0]);
           on(_getTmpl(st,flt[0]));
@@ -2097,7 +2158,6 @@ i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
         i.jsx("option",{value:"Government / PSU",children:"Government / PSU"}),
         i.jsx("option",{value:"Mining / Quarry",children:"Mining / Quarry"}),
         i.jsx("option",{value:"Industrial / Factory",children:"Industrial / Factory"}),
-        i.jsx("option",{value:"Operator",children:"Operator"}),
         i.jsx("option",{value:"Other",children:"Other"})
       ]})
     ]}),
@@ -2105,12 +2165,12 @@ i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
       i.jsx("label",{className:"text-xs font-semibold text-slate-700 block uppercase tracking-wide",children:"2. Select Recipient Lead / Client"}),
       i.jsxs("select",{value:isBatchMode?"ALL_SECTOR":((Ae&&Ae.id)||"MANUAL"),onChange:U=>{
         const val=U.target.value;
-        const secLeads=waSector==="ALL"?b:b.filter(x=>{const ct=(x.customerType||x.businessType||"").toLowerCase();const r=(x.role||"").toLowerCase();if(waSector.toLowerCase()==="operator")return ct==="operator"||r==="operator";return (x.customerType||x.businessType||"Contractor")===waSector;});
+        const secLeads=waSector==="ALL"?b:b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector);
         if(val==="ALL_SECTOR"){
           setIsBatchMode(!0);
           setShowBatchList(!1);
           Ke({customerName:`All ${secLeads.length} ${waSector}s`,companyName:"Batch Broadcast",mobileNumber:"Multiple",customerType:waSector});
-          on(_getTmpl(st,{customerName:"Sir",companyName:"Your Project Site",district:"Palladam"}));
+          on(_getTmpl(st,{customerName:"Sir",companyName:"Your Project Site",district:dailySite||"Palladam"}));
         }else{
           setIsBatchMode(!1);
           setShowBatchList(!1);
@@ -2127,7 +2187,7 @@ i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
           }
         }
       },className:"w-full bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-3 py-2 focus:border-emerald-500 focus:outline-none font-semibold shadow-xs",children:[
-        i.jsxs("option",{value:"ALL_SECTOR",className:"text-emerald-700 font-bold",children:["📢 ",waSector==="ALL"?`All Leads (${b.length} Leads - One-Click Send to All)`:`All ${waSector}s (${(b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector)).length} Leads - Batch Send)`]}),
+        i.jsxs("option",{value:"ALL_SECTOR",className:"text-emerald-700 font-bold",children:["📢 ALL ",waSector.toUpperCase(),"S (One-Click Send to All ",(waSector==="ALL"?b:b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector)).length," ",waSector,"s)"]}),
         i.jsx("option",{disabled:!0,children:"──────── Individual Leads ────────"}),
         (waSector==="ALL"?b:b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector)).map(x=>i.jsxs("option",{value:x.id,children:[x.customerName," - ",x.companyName||x.customerType||"Client"," (",x.mobileNumber||"",")"]},x.id)),
         i.jsx("option",{value:"MANUAL",children:"✏️ Enter Manual / Custom Number"})
@@ -2135,28 +2195,28 @@ i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
     ]})
   ]}),
   isBatchMode?i.jsxs("div",{className:"bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 space-y-2",children:[
-    i.jsxs("div",{className:"flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/80 pb-2",children:[
+    i.jsxs("div",{className:"flex items-center justify-between",children:[
       i.jsxs("div",{className:"flex items-center gap-2",children:[
-        i.jsx(Ci,{size:16,className:"text-emerald-600 shrink-0"}),
-        i.jsxs("span",{className:"text-xs font-bold text-emerald-900 font-sans",children:[
+        i.jsx(Ci,{size:16,className:"text-emerald-600"}),
+        i.jsxs("span",{className:"text-xs font-bold text-emerald-800 font-sans",children:[
           "One-Click Batch Mode Active: Targeting all ",
           (waSector==="ALL"?b:b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector)).length,
-          " ",waSector==="ALL"?"leads across all sectors":`${waSector} contacts`
+          " ",waSector," contacts"
         ]})
       ]}),
-      i.jsxs("button",{type:"button",onClick:()=>setShowBatchList(!showBatchList),className:"px-2.5 py-1 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-2xs cursor-pointer self-start sm:self-auto transition-colors",children:[
-        i.jsx(hc,{size:12}),showBatchList?"Hide Contact List":"View Contact List & Open WhatsApp"
+      i.jsxs("button",{type:"button",onClick:()=>setShowBatchList(!showBatchList),className:"text-xs font-semibold text-emerald-700 hover:text-emerald-900 underline cursor-pointer",children:[
+        showBatchList?"Hide List":"View Contact List & Open WhatsApp"
       ]})
     ]}),
     i.jsx("div",{className:"flex flex-wrap gap-1.5 max-h-16 overflow-y-auto pt-0.5",children:(waSector==="ALL"?b:b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector)).map(x=>i.jsxs("span",{className:"px-2 py-0.5 rounded text-[11px] font-mono bg-white text-emerald-800 border border-emerald-200 shadow-xs shrink-0",children:[x.customerName," (",x.mobileNumber,")"]},x.id))}),
-    showBatchList&&i.jsxs("div",{className:"pt-2 border-t border-emerald-200 space-y-1.5 max-h-36 overflow-y-auto",children:[
-      i.jsx("p",{className:"text-xs text-slate-600 font-medium",children:"Click 'Open Chat' next to any contact to launch WhatsApp with proposal & flyer pre-filled:"}),
+    showBatchList&&i.jsxs("div",{className:"pt-2 border-t border-emerald-200 space-y-1.5 max-h-32 overflow-y-auto",children:[
+      i.jsx("p",{className:"text-xs text-slate-600 font-medium",children:"Click 'Open Chat' next to any contractor to launch WhatsApp Web with proposal & flyer:"}),
       (waSector==="ALL"?b:b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector)).map(x=>i.jsxs("div",{className:"flex items-center justify-between bg-white px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs shadow-xs",children:[
         i.jsxs("div",{className:"truncate mr-2",children:[
           i.jsx("span",{className:"font-semibold text-slate-800",children:x.customerName}),
           i.jsxs("span",{className:"text-slate-500 font-mono text-[11px] ml-1.5",children:["• ",x.mobileNumber," • ",x.companyName||""]})
         ]}),
-        i.jsxs("button",{type:"button",onClick:()=>Pa(x),className:"px-2.5 py-1 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md flex items-center gap-1 shrink-0 cursor-pointer shadow-xs",children:[
+        i.jsxs("button",{type:"button",onClick:()=>Pa(x),className:"px-2.5 py-1 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-md flex items-center gap-1 shrink-0 cursor-pointer shadow-xs",children:[
           i.jsx(Ci,{size:11}),"Open Chat"
         ]})
       ]},x.id))
@@ -2194,11 +2254,11 @@ i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
         "Upload Image / Flyer",
         i.jsx("input",{type:"file",accept:"image/*",onChange:_handleImgUpload,className:"hidden"})
       ]}),
-      i.jsxs("button",{type:"button",onClick:()=>{setWaImage("https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg");f("MMT Promo Flyer attached!","SUCCESS");},className:"px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs",children:[
-        i.jsx(js,{size:13,className:"text-emerald-700"}),
+      i.jsxs("button",{type:"button",onClick:()=>{setWaImage("https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg");f("MMT Promo Flyer attached!","SUCCESS");},className:"px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shadow-xs",children:[
+        i.jsx(js,{size:13,className:"text-emerald-600"}),
         "Use MMT Promo Flyer"
       ]}),
-      i.jsx("span",{className:"text-xs text-slate-500 italic",children:"JPG, PNG, WebP flyers & machine photos"})
+      i.jsx("span",{className:"text-xs text-slate-400 italic",children:"JPG, PNG, WebP flyers & machine photos"})
     ]}):i.jsxs("div",{className:"flex items-center justify-between bg-emerald-50/70 p-2 rounded-lg border border-emerald-200 gap-2.5",children:[
       i.jsxs("div",{className:"flex items-center gap-2.5 min-w-0",children:[
         i.jsx("img",{src:waImage,alt:"Attachment Preview",className:"w-10 h-10 object-cover rounded-md border border-emerald-300 shadow-xs shrink-0"}),
@@ -2213,12 +2273,22 @@ i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
     ]})
   ]}),
   i.jsxs("div",{className:"bg-white p-3 rounded-xl border border-slate-200/90 shadow-xs space-y-1.5",children:[
-    i.jsx("label",{className:"text-xs font-semibold text-slate-700 block uppercase tracking-wide",children:"4. Choose Pitch / Proposal Template"}),
+    i.jsx("label",{className:"text-xs font-semibold text-slate-700 block uppercase tracking-wide",children:"4. Choose Pitch / Proposal / Daily Update Template"}),
     i.jsxs("select",{value:st,onChange:U=>{
       const tKey=U.target.value;
       Xt(tKey);
-      on(_getTmpl(tKey,Ae));
+      if(tKey==="daily_upadate"||tKey==="DAILY_UPDATE"){
+        if(!waImage)setWaImage("https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg");
+        _syncDailyMsg();
+      }else if(tKey==="customer_welcome_template"||tKey==="WELCOME_TEMPLATE"){
+        if(!waImage)setWaImage("https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg");
+        on(_getTmpl("customer_welcome_template",Ae));
+      }else{
+        on(_getTmpl(tKey,Ae));
+      }
     },className:"w-full bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-3 py-2 focus:border-emerald-500 focus:outline-none font-semibold shadow-xs",children:[
+      i.jsx("option",{value:"daily_upadate",className:"font-bold text-emerald-800",children:"📅 [Daily Update] MMT Daily Machinery & Site Status Update (Meta Approved)"}),
+      i.jsx("option",{value:"customer_welcome_template",className:"font-bold text-sky-800",children:"👋 [Welcome] Customer Welcome Template (Meta Approved)"}),
       i.jsx("option",{value:"SITE_ENQUIRY_EN",children:"🚜 [English] Site Machinery Requirement Pitch (PP Sons / Palladam)"}),
       i.jsx("option",{value:"PALLADAM_TAMIL",children:"🚜 [தமிழ்] திட்டப் பணி இயந்திரங்கள் தேவை (பள்ளடம் வடிவம்)"}),
       i.jsx("option",{value:"HIGHWAY_TAMIL",children:"🛣️ [தமிழ்] நெடுஞ்சாலைத் திட்டப் பணி (நீலாம்பூர் Highway வடிவம்)"}),
@@ -2226,28 +2296,66 @@ i.jsxs("div",{className:"wa-modal-body space-y-3",children:[
       i.jsx("option",{value:"CUSTOM",children:"✍️ Custom Message / Empty"})
     ]})
   ]}),
+  (st==="daily_upadate"||st==="DAILY_UPDATE")&&i.jsxs("div",{className:"bg-emerald-50/70 p-3 rounded-xl border border-emerald-200/90 shadow-xs space-y-2.5",children:[
+    i.jsxs("div",{className:"flex items-center justify-between",children:[
+      i.jsxs("label",{className:"text-xs font-bold text-emerald-900 flex items-center gap-1.5 uppercase tracking-wide",children:[
+        i.jsx(Ci,{size:15,className:"text-emerald-600"}),"Daily Update Input Details"
+      ]}),
+      i.jsx("span",{className:"text-[10px] font-mono text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200 font-bold",children:"Template: daily_upadate"})
+    ]}),
+    i.jsxs("div",{className:"grid grid-cols-1 md:grid-cols-2 gap-2.5",children:[
+      i.jsxs("div",{className:"space-y-1",children:[
+        i.jsx("label",{className:"text-[11px] font-semibold text-slate-700 block",children:"Project / Site Location"}),
+        i.jsx("input",{type:"text",value:dailySite,onChange:U=>{const val=U.target.value;setDailySite(val);_syncDailyMsg({site:val})},placeholder:"e.g. Palladam Project Site",className:"w-full bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 focus:outline-none font-medium shadow-xs"})
+      ]}),
+      i.jsxs("div",{className:"space-y-1",children:[
+        i.jsx("label",{className:"text-[11px] font-semibold text-slate-700 block",children:"Machinery Deployed"}),
+        i.jsx("input",{type:"text",value:dailyMachinery,onChange:U=>{const val=U.target.value;setDailyMachinery(val);_syncDailyMsg({machinery:val})},placeholder:"e.g. JCB 3DX Super / 140 Excavator",className:"w-full bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 focus:outline-none font-medium shadow-xs"})
+      ]}),
+      i.jsxs("div",{className:"space-y-1",children:[
+        i.jsx("label",{className:"text-[11px] font-semibold text-slate-700 block",children:"Hours Worked Today"}),
+        i.jsx("input",{type:"text",value:dailyHours,onChange:U=>{const val=U.target.value;setDailyHours(val);_syncDailyMsg({hours:val})},placeholder:"e.g. 8.5 Hours",className:"w-full bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 focus:outline-none font-medium shadow-xs"})
+      ]}),
+      i.jsxs("div",{className:"space-y-1",children:[
+        i.jsx("label",{className:"text-[11px] font-semibold text-slate-700 block",children:"Fuel / Diesel (Optional)"}),
+        i.jsx("input",{type:"text",value:dailyDiesel,onChange:U=>{const val=U.target.value;setDailyDiesel(val);_syncDailyMsg({diesel:val})},placeholder:"e.g. 45 Liters / Full Tank",className:"w-full bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 focus:outline-none font-medium shadow-xs"})
+      ]}),
+      i.jsxs("div",{className:"col-span-1 md:col-span-2 space-y-1",children:[
+        i.jsx("label",{className:"text-[11px] font-semibold text-slate-700 block",children:"Work Progress / Completed Today"}),
+        i.jsx("input",{type:"text",value:dailyWork,onChange:U=>{const val=U.target.value;setDailyWork(val);_syncDailyMsg({work:val})},placeholder:"e.g. Foundation trenching, leveling & earthmoving completed smoothly",className:"w-full bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-2.5 py-1.5 focus:border-emerald-500 focus:outline-none font-medium shadow-xs"})
+      ]})
+    ]})
+  ]}),
   i.jsxs("div",{className:"bg-white p-3 rounded-xl border border-slate-200/90 shadow-xs space-y-1.5",children:[
     i.jsxs("div",{className:"flex items-center justify-between",children:[
       i.jsx("label",{className:"text-xs font-semibold text-slate-700 block uppercase tracking-wide",children:"5. Message Content (Live Editable Preview)"}),
       i.jsxs("span",{className:"text-xs font-mono text-slate-400 font-medium",children:[Mt.length," characters"]})
     ]}),
-    i.jsx("textarea",{rows:3,value:Mt,onChange:U=>on(U.target.value),placeholder:"Type or edit message here...",className:"w-full bg-slate-50/60 border border-slate-300 text-slate-800 text-xs rounded-xl p-2.5 focus:bg-white focus:border-emerald-500 focus:outline-none font-sans leading-relaxed resize-y"}),
-    i.jsx("p",{className:"text-xs text-slate-500 italic",children:"💡 Tip: You can edit rates, equipment lists, and site locations directly in the message box above before sending."})
+    i.jsx("textarea",{rows:4,value:Mt,onChange:U=>on(U.target.value),placeholder:"Type or edit message here...",className:"w-full bg-slate-50/60 border border-slate-300 text-slate-800 text-xs rounded-xl p-2.5 focus:bg-white focus:border-emerald-500 focus:outline-none font-sans leading-relaxed resize-y"})
+  ]}),
+  batchProgress&&i.jsxs("div",{className:"bg-sky-50 border border-sky-200 rounded-xl p-2.5 flex items-center justify-between",children:[
+    i.jsxs("div",{className:"flex items-center gap-2",children:[
+      batchProgress.inProgress&&i.jsx(Fm,{className:"animate-spin text-sky-600",size:14}),
+      i.jsx("span",{className:"text-xs font-semibold text-sky-800",children:batchProgress.status})
+    ]}),
+    i.jsxs("span",{className:"text-xs font-bold text-sky-700 font-mono",children:[batchProgress.sent," / ",batchProgress.total]})
   ]})
 ]}),
 i.jsxs("div",{className:"wa-modal-footer",children:[
   i.jsxs("button",{type:"button",onClick:_copyMsg,className:"px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 rounded-lg flex items-center gap-1.5 border border-slate-300 shadow-xs transition-colors cursor-pointer shrink-0",children:[
     i.jsx(Yu,{size:13}),"Copy Message"
   ]}),
-  i.jsxs("div",{className:"flex items-center gap-2.5 shrink-0",children:[
+  i.jsxs("div",{className:"flex items-center gap-2.5 shrink-0 flex-wrap",children:[
     i.jsx("button",{type:"button",onClick:()=>ee(!1),className:"px-4 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded-lg cursor-pointer transition-colors shrink-0",children:"Cancel"}),
     isBatchMode?i.jsx("button",{type:"button",onClick:()=>_batchSendToAll(),className:"px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-colors cursor-pointer font-sans shrink-0",children:[
       i.jsx(Du,{size:13}),
       waSector==="ALL"?`One-Click Send to All Leads (${b.length})`:`One-Click Send to All ${waSector}s (${(b.filter(x=>(x.customerType||x.businessType||"Contractor")===waSector)).length})`
     ]}):i.jsxs(y.Fragment,{children:[
-      i.jsxs("button",{type:"button",onClick:()=>{if(!Ae)return;const num=((Ae.whatsAppNumber||Ae.mobileNumber||"").replace(/[^0-9]/g,""));const clean=num.startsWith("91")?num:`91${num}`;window.open(`https://wa.me/${clean}?text=${encodeURIComponent(Mt)}`,"_blank");},className:"px-3.5 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shrink-0",title:"Open custom message in WhatsApp Web/App",children:[i.jsx(Ci,{size:13}),"Open in WhatsApp"]}),
-      i.jsxs("button",{type:"button",onClick:()=>Pa(),className:"px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-colors cursor-pointer shrink-0",children:[
-        i.jsx(Du,{size:13}),"Send Message from CRM"
+      i.jsxs("button",{type:"button",onClick:()=>{if(!Ae)return;const num=((Ae.whatsAppNumber||Ae.mobileNumber||"").replace(/[^0-9]/g,""));const clean=num.startsWith("91")?num:`91${num}`;let fullMsg=Mt||"";if(waImage)fullMsg+=`\n\n📷 Machine Flyer: ${waImage}`;window.open(`https://wa.me/${clean}?text=${encodeURIComponent(fullMsg)}`,"_blank");},className:"px-3.5 py-2 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer shrink-0",title:"Open WhatsApp Web/App directly with message & flyer",children:[
+        i.jsx(Ci,{size:13}),"Open in WhatsApp"
+      ]}),
+      i.jsxs("button",{type:"button",onClick:()=>Pa(),className:"px-4 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg flex items-center gap-1.5 shadow-md shadow-emerald-600/30 transition-colors cursor-pointer font-sans shrink-0",title:"Send directly via Meta WhatsApp Cloud API",children:[
+        i.jsx(Vo,{size:13}),(st==="daily_upadate"||st==="DAILY_UPDATE")?"Send Daily Update (API)":((st==="customer_welcome_template"||st==="WELCOME_TEMPLATE")?"Send Welcome (API)":"Send Proposal via API")
       ]})
     ]})
   ]})

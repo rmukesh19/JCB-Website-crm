@@ -107,11 +107,17 @@ export const createLead = async (req, res) => {
 
     const newLead = await CrmLead.create(leadData);
 
-    // Trigger WhatsApp notification for new lead
-    // Send without await so it doesn't block the API response
-    triggerWhatsAppAutomation(leadData.companyId, 'welcomemessage', leadData);
+    // Trigger WhatsApp notification for new lead with Meta approved customer_welcome_template
+    let waResult = null;
+    try {
+      waResult = await triggerWhatsAppAutomation(leadData.companyId, 'customer_welcome_template', leadData);
+      console.log(`[CRM] customer_welcome_template dispatched for ${leadData.customerName}:`, waResult);
+    } catch (waErr) {
+      console.error('[CRM] Error sending customer_welcome_template:', waErr.message);
+    }
 
-    res.status(201).json(newLead);
+    const resLead = (newLead && typeof newLead.toObject === 'function') ? newLead.toObject() : { ...newLead };
+    res.status(201).json({ ...resLead, whatsAppResult: waResult });
   } catch (err) {
     console.error('Error creating lead:', err);
     res.status(500).json({ error: 'Failed to create lead', details: err.message });

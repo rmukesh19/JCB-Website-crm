@@ -28,7 +28,47 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
     let templateName = '';
     let components = [];
 
-    if (templateType === 'welcomemessage' || templateType === 'welcome' || templateType === 'customer_welcome_template') {
+    if (templateType === 'daily_update' || templateType === 'daily_upadate') {
+      templateName = 'daily_upadate';
+      components = [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "image",
+              image: {
+                link: data.imageUrl || "https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg"
+              }
+            }
+          ]
+        }
+      ];
+    } else if (templateType === 'welcomemessage' || templateType === 'welcome' || templateType === 'customer_welcome_template') {
+      templateName = 'customer_welcome_template';
+      const svc = data.interestedMachine || (data.rentalRequirement ? `${data.rentalRequirement} JCB Rental` : "JCB Rentals & Earthmoving");
+      components = [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "image",
+              image: {
+                link: data.imageUrl || "https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg"
+              }
+            }
+          ]
+        },
+        {
+          type: "body",
+          parameters: [
+            { type: "text", parameter_name: "customer_name", text: data.customerName || data.name || "Customer" },
+            { type: "text", parameter_name: "service_name", text: svc },
+            { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
+          ]
+        }
+      ];
+    } else {
+      console.log(`[WhatsApp API Service] Template type ${templateType} not configured yet, falling back to customer_welcome_template.`);
       templateName = 'customer_welcome_template';
       components = [
         {
@@ -45,15 +85,12 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
         {
           type: "body",
           parameters: [
-            { type: "text", parameter_name: "customer_name", text: data.customerName || "Customer" },
-            { type: "text", parameter_name: "service_name", text: "JCB Rentals" },
+            { type: "text", parameter_name: "customer_name", text: data.customerName || data.name || "Customer" },
+            { type: "text", parameter_name: "service_name", text: "JCB Rentals & Earthmoving" },
             { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
           ]
         }
       ];
-    } else {
-      console.log(`[WhatsApp API Service] Template type ${templateType} not configured yet.`);
-      return { success: false, error: 'Template type not configured' };
     }
 
     const payload = {
@@ -76,7 +113,7 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
       }
     });
 
-    console.log(`[WhatsApp API Service] Message sent successfully. Message ID:`, response.data.messages?.[0]?.id);
+    console.log(`[WhatsApp API Service] ${templateName} sent successfully to ${cleanNumber}. Message ID:`, response.data.messages?.[0]?.id);
     return { success: true, messageId: response.data.messages?.[0]?.id || `WA_${Date.now()}` };
   } catch (error) {
     const errorMsg = error.response?.data?.error?.message || error.message;
@@ -85,7 +122,7 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
   }
 };
 
-export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, sector }) => {
+export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, sector, templateName }) => {
   let cleanNumber = '';
   try {
     if (!to) {
@@ -115,40 +152,71 @@ export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, se
     // Meta template body has max length 1024 total. Truncate service_name parameter to ~750 characters to prevent #132005 error
     const serviceNameParam = messageContent ? (messageContent.length > 750 ? messageContent.slice(0, 750) : messageContent) : (sector ? `${sector} Machinery Services` : 'JCB Machinery & Services');
 
-    const payload = {
-      messaging_product: "whatsapp",
-      to: cleanNumber,
-      type: "template",
-      template: {
-        name: "customer_welcome_template",
-        language: {
-          code: "en"
-        },
-        components: [
-          {
-            type: "header",
-            parameters: [
-              {
-                type: "image",
-                image: {
-                  link: headerImageUrl
-                }
-              }
-            ]
-          },
-          {
-            type: "body",
-            parameters: [
-              { type: "text", parameter_name: "customer_name", text: customerName || "Customer" },
-              { type: "text", parameter_name: "service_name", text: serviceNameParam },
-              { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
-            ]
-          }
-        ]
-      }
-    };
+    let payload;
+    const selectedTemplate = (templateName || '').toLowerCase();
 
-    console.log(`[WhatsApp API Service] Sending customer_welcome_template to ${cleanNumber} (${customerName || 'Customer'})...`);
+    if (selectedTemplate === 'daily_upadate' || selectedTemplate === 'daily_update') {
+      payload = {
+        messaging_product: "whatsapp",
+        to: cleanNumber,
+        type: "template",
+        template: {
+          name: "daily_upadate",
+          language: {
+            code: "en"
+          },
+          components: [
+            {
+              type: "header",
+              parameters: [
+                {
+                  type: "image",
+                  image: {
+                    link: headerImageUrl
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      };
+      console.log(`[WhatsApp API Service] Sending Meta approved daily_upadate template to ${cleanNumber}...`);
+    } else {
+      // Default / customer_welcome_template
+      payload = {
+        messaging_product: "whatsapp",
+        to: cleanNumber,
+        type: "template",
+        template: {
+          name: "customer_welcome_template",
+          language: {
+            code: "en"
+          },
+          components: [
+            {
+              type: "header",
+              parameters: [
+                {
+                  type: "image",
+                  image: {
+                    link: headerImageUrl
+                  }
+                }
+              ]
+            },
+            {
+              type: "body",
+              parameters: [
+                { type: "text", parameter_name: "customer_name", text: customerName || "Customer" },
+                { type: "text", parameter_name: "service_name", text: serviceNameParam },
+                { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
+              ]
+            }
+          ]
+        }
+      };
+      console.log(`[WhatsApp API Service] Sending customer_welcome_template to ${cleanNumber} (${customerName || 'Customer'})...`);
+    }
 
     const response = await axios.post(`https://graph.facebook.com/v22.0/${PHONE_NUMBER_ID}/messages`, payload, {
       headers: {
