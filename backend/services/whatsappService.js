@@ -179,69 +179,79 @@ export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, se
     const cleanCustomerName = sanitizeParam(customerName || 'Customer', 40) || 'Customer';
 
     let payload;
-    const selectedTemplate = (templateName || '').toLowerCase();
+    const messageBody = (text || '').trim();
 
-    if (selectedTemplate === 'daily_upadate' || selectedTemplate === 'daily_update') {
-      payload = {
-        messaging_product: "whatsapp",
-        to: cleanNumber,
-        type: "template",
-        template: {
-          name: "daily_upadate",
-          language: {
-            code: "en"
-          },
-          components: [
-            {
-              type: "header",
-              parameters: [
-                {
-                  type: "image",
-                  image: {
-                    link: headerImageUrl
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      };
-      console.log(`[WhatsApp API Service] Sending Meta approved daily_upadate template to ${cleanNumber}...`);
+    // If custom message content is provided from Box 5 (Editable Preview / Proposal / Daily Update),
+    // dispatch the actual message content with flyer or text so the recipient receives the exact message entered
+    if (messageBody) {
+      if (headerImageUrl) {
+        payload = {
+          messaging_product: "whatsapp",
+          to: cleanNumber,
+          type: "image",
+          image: {
+            link: headerImageUrl,
+            caption: messageBody.slice(0, 3000)
+          }
+        };
+        console.log(`[WhatsApp API Service] Dispatching custom message with image (${messageBody.length} chars) to ${cleanNumber}...`);
+      } else {
+        payload = {
+          messaging_product: "whatsapp",
+          to: cleanNumber,
+          type: "text",
+          text: {
+            body: messageBody.slice(0, 4096)
+          }
+        };
+        console.log(`[WhatsApp API Service] Dispatching custom text message (${messageBody.length} chars) to ${cleanNumber}...`);
+      }
     } else {
-      // Default / customer_welcome_template
-      payload = {
-        messaging_product: "whatsapp",
-        to: cleanNumber,
-        type: "template",
-        template: {
-          name: "customer_welcome_template",
-          language: {
-            code: "en"
-          },
-          components: [
-            {
-              type: "header",
-              parameters: [
-                {
-                  type: "image",
-                  image: {
-                    link: headerImageUrl
-                  }
-                }
-              ]
-            },
-            {
-              type: "body",
-              parameters: [
-                { type: "text", parameter_name: "customer_name", text: cleanCustomerName },
-                { type: "text", parameter_name: "service_name", text: cleanServiceName },
-                { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
-              ]
-            }
-          ]
-        }
-      };
-      console.log(`[WhatsApp API Service] Sending customer_welcome_template to ${cleanNumber} (${cleanCustomerName})...`);
+      // Fall back to Meta pre-approved template when no custom message body is provided
+      const selectedTemplate = (templateName || '').toLowerCase();
+      if (selectedTemplate === 'daily_upadate' || selectedTemplate === 'daily_update') {
+        payload = {
+          messaging_product: "whatsapp",
+          to: cleanNumber,
+          type: "template",
+          template: {
+            name: "daily_upadate",
+            language: { code: "en" },
+            components: [
+              {
+                type: "header",
+                parameters: [{ type: "image", image: { link: headerImageUrl } }]
+              }
+            ]
+          }
+        };
+        console.log(`[WhatsApp API Service] Sending Meta approved daily_upadate template to ${cleanNumber}...`);
+      } else {
+        payload = {
+          messaging_product: "whatsapp",
+          to: cleanNumber,
+          type: "template",
+          template: {
+            name: "customer_welcome_template",
+            language: { code: "en" },
+            components: [
+              {
+                type: "header",
+                parameters: [{ type: "image", image: { link: headerImageUrl } }]
+              },
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", parameter_name: "customer_name", text: cleanCustomerName },
+                  { type: "text", parameter_name: "service_name", text: cleanServiceName },
+                  { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
+                ]
+              }
+            ]
+          }
+        };
+        console.log(`[WhatsApp API Service] Sending customer_welcome_template to ${cleanNumber} (${cleanCustomerName})...`);
+      }
     }
 
     const response = await axios.post(`https://graph.facebook.com/v22.0/${PHONE_NUMBER_ID}/messages`, payload, {
@@ -252,7 +262,7 @@ export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, se
     });
 
     const msgInfo = response.data.messages?.[0];
-    console.log(`[WhatsApp API Service] Template message successfully delivered to Meta for ${cleanNumber}:`, msgInfo);
+    console.log(`[WhatsApp API Service] Message successfully delivered to Meta for ${cleanNumber}:`, msgInfo);
 
     return {
       success: true,
@@ -260,7 +270,65 @@ export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, se
     };
   } catch (error) {
     const errorData = error.response?.data?.error;
+    const errorCode = errorData?.code;
     const errorMsg = errorData?.message || error.message;
+
+    // If direct custom message failed due to 24-hr window (code 131047), fallback to pre-approved template
+    const messageBody = (text || '').trim();
+    if (errorCode === 131047 && messageBody) {
+      console.warn(`[WhatsApp API Service] 24-hr window closed for ${cleanNumber}. Falling back to pre-approved template...`);
+      try {
+        const fallbackTemplate = (templateName === 'daily_upadate' || templateName === 'daily_update') ? 'daily_upadate' : 'customer_welcome_template';
+        const fallbackPayload = fallbackTemplate === 'daily_upadate' ? {
+          messaging_product: "whatsapp",
+          to: cleanNumber,
+          type: "template",
+          template: {
+            name: "daily_upadate",
+            language: { code: "en" },
+            components: [
+              { type: "header", parameters: [{ type: "image", image: { link: headerImageUrl } }] }
+            ]
+          }
+        } : {
+          messaging_product: "whatsapp",
+          to: cleanNumber,
+          type: "template",
+          template: {
+            name: "customer_welcome_template",
+            language: { code: "en" },
+            components: [
+              { type: "header", parameters: [{ type: "image", image: { link: headerImageUrl } }] },
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", parameter_name: "customer_name", text: cleanCustomerName },
+                  { type: "text", parameter_name: "service_name", text: cleanServiceName },
+                  { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
+                ]
+              }
+            ]
+          }
+        };
+
+        const fbRes = await axios.post(`https://graph.facebook.com/v22.0/${PHONE_NUMBER_ID}/messages`, fallbackPayload, {
+          headers: {
+            'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const fbMsg = fbRes.data.messages?.[0];
+        console.log(`[WhatsApp API Service] Fallback template ${fallbackTemplate} delivered to Meta for ${cleanNumber}:`, fbMsg);
+        return {
+          success: true,
+          messageId: fbMsg?.id || `WA_${Date.now()}`,
+          fallback: true
+        };
+      } catch (fbErr) {
+        console.error(`[WhatsApp API Service] Template fallback also failed for ${cleanNumber}:`, fbErr.response?.data?.error || fbErr.message);
+      }
+    }
+
     console.error(`[WhatsApp API Service] Send failed for ${cleanNumber}:`, errorData || error.message);
 
     return {
