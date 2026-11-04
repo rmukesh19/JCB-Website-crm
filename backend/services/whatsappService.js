@@ -4,6 +4,15 @@ import axios from 'axios';
 const WHATSAPP_TOKEN = "EAAi8tYoZBlXwBSkdVGv4VPB11DQPPZCDjVBClVdM8OD1GAY2xyUxfzRyNWDh3Qz8hDgFbxdy0aPtUvWrlgoZC79ZCwUc2iVQ2U4zfBhKvwn2RsdJBmZCUGAXuZAOe52k84js4Ia7OcEEUeSSAMS6pZBOyZB76eqiZCkOYUOyQZA18n9NWmoP5welBycVv3KgCMZCqup7wZDZD";
 const PHONE_NUMBER_ID = "1264885403385625";
 
+const sanitizeParam = (val, maxLen = 60) => {
+  if (!val) return '';
+  return String(val)
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, maxLen);
+};
+
 export const triggerWhatsAppAutomation = async (companyId, templateType, data) => {
   try {
     const to = data.whatsAppNumber || data.mobileNumber || data.phone || data.mobile || '';
@@ -16,6 +25,11 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
     let cleanNumber = to.replace(/\D/g, '');
     if (cleanNumber.length === 10) {
       cleanNumber = `91${cleanNumber}`;
+    } else if (cleanNumber.length === 12 && cleanNumber.startsWith('91')) {
+      // already 91xxxxxxxxxx
+    } else {
+      console.warn(`[WhatsApp API Service] Invalid phone number (${to}). Must be 10 digits.`);
+      return { success: false, error: 'Invalid phone number format' };
     }
 
     if (cleanNumber === '919626546679') {
@@ -61,8 +75,8 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
         {
           type: "body",
           parameters: [
-            { type: "text", parameter_name: "customer_name", text: data.customerName || data.name || "Customer" },
-            { type: "text", parameter_name: "service_name", text: svc },
+            { type: "text", parameter_name: "customer_name", text: sanitizeParam(data.customerName || data.name || "Customer", 40) },
+            { type: "text", parameter_name: "service_name", text: sanitizeParam(svc, 60) },
             { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
           ]
         }
@@ -85,7 +99,7 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
         {
           type: "body",
           parameters: [
-            { type: "text", parameter_name: "customer_name", text: data.customerName || data.name || "Customer" },
+            { type: "text", parameter_name: "customer_name", text: sanitizeParam(data.customerName || data.name || "Customer", 40) },
             { type: "text", parameter_name: "service_name", text: "JCB Rentals & Earthmoving" },
             { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
           ]
@@ -120,15 +134,6 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
     console.error('WhatsApp notification error:', errorMsg);
     return { success: false, error: errorMsg };
   }
-};
-
-const sanitizeParam = (val, maxLen = 60) => {
-  if (!val) return '';
-  return String(val)
-    .replace(/[\r\n\t]+/g, ' ')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .slice(0, maxLen);
 };
 
 export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, sector, templateName }) => {
