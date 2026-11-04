@@ -122,6 +122,15 @@ export const triggerWhatsAppAutomation = async (companyId, templateType, data) =
   }
 };
 
+const sanitizeParam = (val, maxLen = 60) => {
+  if (!val) return '';
+  return String(val)
+    .replace(/[\r\n\t]+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .slice(0, maxLen);
+};
+
 export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, sector, templateName }) => {
   let cleanNumber = '';
   try {
@@ -132,6 +141,13 @@ export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, se
     cleanNumber = String(to).replace(/\D/g, '');
     if (cleanNumber.length === 10) {
       cleanNumber = `91${cleanNumber}`;
+    } else if (cleanNumber.length === 12 && cleanNumber.startsWith('91')) {
+      // already valid 91xxxxxxxxxx
+    } else {
+      return {
+        success: false,
+        error: `Invalid phone number (${to}). Mobile numbers must be 10 digits.`
+      };
     }
 
     if (cleanNumber === '919626546679') {
@@ -141,16 +157,21 @@ export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, se
       };
     }
 
-    const messageContent = (text || '').trim();
-
     // Determine header image (user-uploaded custom image or default MMT promotional banner)
     let headerImageUrl = 'https://crm.mmtenterprises.in/mmt_whatsapp_promo_banner.jpg';
     if (imageUrl) {
       headerImageUrl = imageUrl.startsWith('/') ? `https://crm.mmtenterprises.in${imageUrl}` : imageUrl;
     }
 
-    // Meta template body has max length 1024 total. Truncate service_name parameter to ~750 characters to prevent #132005 error
-    const serviceNameParam = messageContent ? (messageContent.length > 750 ? messageContent.slice(0, 750) : messageContent) : (sector ? `${sector} Machinery Services` : 'JCB Machinery & Services');
+    // Meta template body parameters must NOT contain newlines, tabs, or >4 spaces
+    let svc = 'JCB Machinery & Earthmoving Services';
+    if (sector && sector !== 'ALL') {
+      svc = `${sector} Machinery Services`;
+    } else if (text && text.length <= 60 && !/[\r\n\t]/.test(text)) {
+      svc = text;
+    }
+    const cleanServiceName = sanitizeParam(svc, 60) || 'JCB Machinery & Services';
+    const cleanCustomerName = sanitizeParam(customerName || 'Customer', 40) || 'Customer';
 
     let payload;
     const selectedTemplate = (templateName || '').toLowerCase();
@@ -207,15 +228,15 @@ export const sendWhatsAppMessage = async ({ to, text, imageUrl, customerName, se
             {
               type: "body",
               parameters: [
-                { type: "text", parameter_name: "customer_name", text: customerName || "Customer" },
-                { type: "text", parameter_name: "service_name", text: serviceNameParam },
+                { type: "text", parameter_name: "customer_name", text: cleanCustomerName },
+                { type: "text", parameter_name: "service_name", text: cleanServiceName },
                 { type: "text", parameter_name: "phone_number", text: "+91 96265 46679" }
               ]
             }
           ]
         }
       };
-      console.log(`[WhatsApp API Service] Sending customer_welcome_template to ${cleanNumber} (${customerName || 'Customer'})...`);
+      console.log(`[WhatsApp API Service] Sending customer_welcome_template to ${cleanNumber} (${cleanCustomerName})...`);
     }
 
     const response = await axios.post(`https://graph.facebook.com/v22.0/${PHONE_NUMBER_ID}/messages`, payload, {
