@@ -45,11 +45,7 @@ export const getInitialData = () => ({
     { id: 3, companyId: 1, branchId: 1, username: "accounts", password: "password123", name: "K. Malathi", role: "ACCOUNTS", email: "malathi.acc@srimuruganfleet.in", phone: "9842199882", active: true },
     { id: 4, companyId: 1, branchId: 1, username: "operator", password: "password123", name: "P. Murugan", role: "OPERATOR", email: "murugan@srimuruganfleet.in", phone: "9789011223", active: true }
   ],
-  machines: [
-    { id: 1, companyId: 1, branchId: 1, code: "JCB-3DX-01", name: "JCB 3DX Super Eco", modelName: "JCB 3DX Super Eco", type: "Backhoe Loader", regNumber: "TN-30-BD-4492", plateNumber: "TN-30-BD-4492", chasisNumber: "HAR3DX981249", chassisNumber: "HAR3DX981249", engineNumber: "ENG3DX8812", yom: 2022, currentMeterReading: 0, currentHours: 0, nextServiceDueHours: 0, ownership: "OWNED", defaultRatePerHour: 1400, hourlyRate: 1400, dailyRate: 10500, weeklyRate: 65000, monthlyRate: 250000, defaultRateWithDiesel: 1900, status: "AVAILABLE", assignedOperatorId: null },
-    { id: 2, companyId: 1, branchId: 1, code: "HITACHI-EX200", name: "Tata Hitachi EX200 LC", modelName: "Tata Hitachi EX200 LC", type: "Heavy Excavator", regNumber: "TN-30-CA-8819", plateNumber: "TN-30-CA-8819", chasisNumber: "THEX200984128", chassisNumber: "THEX200984128", engineNumber: "ENGEX200941", yom: 2021, currentMeterReading: 0, currentHours: 0, nextServiceDueHours: 0, ownership: "OWNED", defaultRatePerHour: 2800, hourlyRate: 2800, dailyRate: 21000, weeklyRate: 130000, monthlyRate: 500000, defaultRateWithDiesel: 3800, status: "AVAILABLE", assignedOperatorId: null },
-    { id: 3, companyId: 1, branchId: 1, code: "CAT-424B", name: "Caterpillar 424B2", modelName: "Caterpillar 424B2", type: "Backhoe Loader", regNumber: "TN-54-E-1902", plateNumber: "TN-54-E-1902", chasisNumber: "CAT424B889211", chassisNumber: "CAT424B889211", engineNumber: "ENGCAT424B12", yom: 2023, currentMeterReading: 0, currentHours: 0, nextServiceDueHours: 0, ownership: "OWNED", defaultRatePerHour: 1500, hourlyRate: 1500, dailyRate: 11500, weeklyRate: 70000, monthlyRate: 270000, defaultRateWithDiesel: 2050, status: "AVAILABLE", assignedOperatorId: null }
-  ],
+  machines: [],
   customers: [],
   bookings: [],
   invoices: [],
@@ -81,10 +77,7 @@ export const getInitialData = () => ({
   drivers: [],
   spareParts: [],
   suppliers: [],
-  rates: [
-    { id: 1, companyId: 1, machineType: "Backhoe Loader (JCB 3DX)", unit: "HOUR", rateWithoutFuel: 1400, rateWithFuel: 1900, overtimeRate: 1500 },
-    { id: 2, companyId: 1, machineType: "Heavy Excavator (20-Ton LC)", unit: "HOUR", rateWithoutFuel: 2800, rateWithFuel: 3800, overtimeRate: 3000 }
-  ],
+  rates: [],
   purchases: [],
   notifications: [],
   rolesPermissions: [
