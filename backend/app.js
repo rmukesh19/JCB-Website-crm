@@ -1,28 +1,68 @@
 import express from 'express';
 import cors from 'cors';
-import helmet from 'helmet';
+import compression from 'compression';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import path from 'path';
 import apiRoutes from './routes/index.js';
+import { configureEnterpriseSecurity } from './middleware/security.js';
 
 dotenv.config();
 
 const app = express();
 
-// Middlewares
-app.use(helmet({ contentSecurityPolicy: false }));
-app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-app.use(morgan('dev'));
+// Disable framework finger-printing
+app.disable('x-powered-by');
 
-// Static uploads route
-app.use('/uploads', express.static(path.join(process.cwd(), 'backend', 'uploads')));
+// Enforce Strict Enterprise Helmet Security Policies (CSP, HSTS, NoSniff, Clickjacking Prevention)
+app.use(configureEnterpriseSecurity());
 
-// Health Check
+// HTTP Payload Compression (Gzip / Deflate reduces payload transfer size by ~70%)
+app.use(compression({
+  threshold: 1024, // only compress responses > 1KB
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
+}));
+
+// CORS Configuration with origin sanitation
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
+
+// Safe bounded body parsing to prevent heap memory exhaustion DoS
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+// Request logging (condensed for production performance)
+if (process.env.NODE_ENV !== 'test') {
+  app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+}
+
+// Static uploads route with cache headers
+app.use('/uploads', express.static(path.join(process.cwd(), 'backend', 'uploads'), {
+  maxAge: '7d',
+  immutable: true
+}));
+
+// Health Check with system memory and uptime metrics
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', service: 'JCB360 Enterprise API', timestamp: new Date() });
+  const memoryUsage = process.memoryUsage();
+  res.json({
+    status: 'ok',
+    service: 'JCB360 Enterprise API',
+    uptime: Math.round(process.uptime()),
+    timestamp: new Date().toISOString(),
+    memory: {
+      rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`,
+      heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`,
+      heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`
+    }
+  });
 });
 
 // Mount Master API Routes
@@ -33,8 +73,16 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: `API endpoint ${req.originalUrl} not found` });
 });
 
-// Global Error Handler
+// Global Error Handler with clean status mapping
 app.use((err, req, res, next) => {
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({
+      success: false,
+      code: 'PAYLOAD_TOO_LARGE',
+      error: 'Request payload exceeds maximum 15MB limit'
+    });
+  }
+
   console.error('Unhandled Application Error:', err);
   res.status(err.status || 500).json({
     success: false,

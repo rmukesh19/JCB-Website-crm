@@ -11,16 +11,32 @@
     <meta name="description" content="MMT ENTERPRISES - Production-ready enterprise JCB and heavy equipment management, booking, billing, diesel tracking, maintenance, and accounting ERP." />
     <meta property="og:title" content="MMT ENTERPRISES - Fleet Management & Billing ERP" />
     <meta property="og:description" content="MMT ENTERPRISES - Production-ready enterprise JCB and heavy equipment management, booking, billing, diesel tracking, maintenance, and accounting ERP." />
-    <!-- Async Storage Sync: Bridge API leads data into localStorage for dashboard KPIs -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="modulepreload" href="/assets/index-Dbowi09z.js?v=wa_daily_update_v18">
+
+    <!-- Leak-Free Visibility-Aware CRM Leads Sync -->
     <script>
       (function syncLeadsToLocalStorage() {
+        var timer = null;
         function doSync() {
+          // Skip network request and V8 allocation if document is hidden/backgrounded
+          if (document.hidden) return;
+
           var token = localStorage.getItem('jcb360_token');
-          if (!token) return; // Not logged in yet, skip
+          if (!token) return;
+
           fetch('/api/crm/leads', {
             headers: { 'Content-Type': 'application/json', 'Authorization': token }
           })
-            .then(function(res) { return res.ok ? res.json() : null; })
+            .then(function(res) {
+              if (res.status === 401 || res.status === 403) {
+                // Token expired/invalid: halt polling loop to prevent infinite request leak
+                if (timer) clearInterval(timer);
+                return null;
+              }
+              return res.ok ? res.json() : null;
+            })
             .then(function(data) {
               if (!data) return;
               var leads = Array.isArray(data) ? data : (data.leads || data.data || []);
@@ -33,10 +49,18 @@
             })
             .catch(function() {});
         }
-        // Sync after a short delay (allow app to login/restore session first)
+
+        // Initial sync with cleanup listeners
         setTimeout(doSync, 1500);
-        // Re-sync every 20 seconds to keep dashboard KPIs fresh
-        setInterval(doSync, 20000);
+        timer = setInterval(doSync, 30000);
+
+        document.addEventListener('visibilitychange', function() {
+          if (!document.hidden) doSync();
+        });
+
+        window.addEventListener('beforeunload', function() {
+          if (timer) clearInterval(timer);
+        });
       })();
     </script>
     <script type="module" crossorigin src="/assets/index-Dbowi09z.js?v=wa_daily_update_v18"></script>

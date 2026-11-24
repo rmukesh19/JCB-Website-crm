@@ -126,7 +126,7 @@ export const createLead = async (req, res) => {
 
 export const importLeads = async (req, res) => {
   try {
-    const list = Array.isArray(req.body) ? req.body : (req.body.leads || req.body.data || []);
+    const list = req.sanitizedRecords || (Array.isArray(req.body) ? req.body : (req.body?.leads || req.body?.data || []));
     if (!Array.isArray(list) || list.length === 0) {
       return res.status(400).json({ error: 'No lead records provided for import' });
     }

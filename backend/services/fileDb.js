@@ -416,9 +416,13 @@ export const getInitialData = () => ({
   ]
 });
 
-// Helper to track array mutations and auto-save
+// Optimized helper to track array mutations without leaking closures
+const ARRAY_MUTATING_METHODS = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'];
+
 function createTrackedArray(arr, onMutate) {
   if (!Array.isArray(arr)) return arr;
+  const methodCache = new Map();
+
   return new Proxy(arr, {
     set(target, prop, value) {
       const success = Reflect.set(target, prop, value);
@@ -428,28 +432,171 @@ function createTrackedArray(arr, onMutate) {
       return success;
     },
     get(target, prop) {
-      const orig = target[prop];
-      if (typeof orig === 'function' && ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].includes(prop)) {
-        return function(...args) {
-          const result = orig.apply(target, args);
-          onMutate();
-          return result;
-        };
+      if (ARRAY_MUTATING_METHODS.includes(prop)) {
+        let fn = methodCache.get(prop);
+        if (!fn) {
+          const orig = target[prop];
+          fn = function(...args) {
+            const result = orig.apply(target, args);
+            onMutate();
+            return result;
+          };
+          methodCache.set(prop, fn);
+        }
+        return fn;
       }
-      return orig;
+      return target[prop];
     }
   });
 }
 
-export let db = {};let saveTimer = null;
+// In-Memory Index Engine for O(1) primary lookups and O(K) indexed queries
+class CollectionIndex {
+  constructor(collectionName) {
+    this.collectionName = collectionName;
+    this.primaryMap = new Map();
+    this.secondaryIndexes = new Map();
+    this.indexedFields = new Set([
+      'companyId', 'status', 'mobileNumber', 'phone', 'username',
+      'email', 'date', 'startDate', 'customerId', 'machineId', 'customerType'
+    ]);
+    for (const field of this.indexedFields) {
+      this.secondaryIndexes.set(field, new Map());
+    }
+  }
+
+  rebuild(arr) {
+    this.primaryMap.clear();
+    for (const field of this.indexedFields) {
+      this.secondaryIndexes.get(field).clear();
+    }
+    if (!Array.isArray(arr)) return;
+    for (let i = 0; i < arr.length; i++) {
+      this.indexDoc(arr[i]);
+    }
+  }
+
+  indexDoc(item) {
+    if (!item) return;
+    if (item.id !== undefined && item.id !== null) {
+      this.primaryMap.set(String(item.id), item);
+      if (typeof item.id === 'number') this.primaryMap.set(item.id, item);
+    }
+    if (item._id !== undefined && item._id !== null) {
+      this.primaryMap.set(String(item._id), item);
+    }
+
+    for (const field of this.indexedFields) {
+      if (item[field] !== undefined && item[field] !== null) {
+        const fieldMap = this.secondaryIndexes.get(field);
+        if (fieldMap) {
+          const val = String(item[field]);
+          let set = fieldMap.get(val);
+          if (!set) {
+            set = new Set();
+            fieldMap.set(val, set);
+          }
+          set.add(item);
+        }
+      }
+    }
+  }
+
+  unindexDoc(item) {
+    if (!item) return;
+    if (item.id !== undefined && item.id !== null) {
+      this.primaryMap.delete(String(item.id));
+      if (typeof item.id === 'number') this.primaryMap.delete(item.id);
+    }
+    if (item._id !== undefined && item._id !== null) {
+      this.primaryMap.delete(String(item._id));
+    }
+
+    for (const field of this.indexedFields) {
+      if (item[field] !== undefined && item[field] !== null) {
+        const fieldMap = this.secondaryIndexes.get(field);
+        if (fieldMap) {
+          const val = String(item[field]);
+          const set = fieldMap.get(val);
+          if (set) {
+            set.delete(item);
+            if (set.size === 0) fieldMap.delete(val);
+          }
+        }
+      }
+    }
+  }
+
+  findById(id) {
+    return this.primaryMap.get(id) || this.primaryMap.get(String(id)) || null;
+  }
+
+  getCandidates(query, fullArr) {
+    if (!query || typeof query !== 'object' || Object.keys(query).length === 0) {
+      return fullArr;
+    }
+
+    if (query.id !== undefined && typeof query.id !== 'object') {
+      const doc = this.findById(query.id);
+      return doc ? [doc] : [];
+    }
+    if (query._id !== undefined && typeof query._id !== 'object') {
+      const doc = this.findById(query._id);
+      return doc ? [doc] : [];
+    }
+
+    for (const [key, val] of Object.entries(query)) {
+      if (this.indexedFields.has(key) && val !== null && val !== undefined && typeof val !== 'object') {
+        const fieldMap = this.secondaryIndexes.get(key);
+        if (fieldMap) {
+          const set = fieldMap.get(String(val));
+          if (!set || set.size === 0) return [];
+          return Array.from(set);
+        }
+      }
+    }
+
+    return fullArr;
+  }
+}
+
+const indexes = new Map();
+function getIndex(colName) {
+  let idx = indexes.get(colName);
+  if (!idx) {
+    idx = new CollectionIndex(colName);
+    indexes.set(colName, idx);
+    if (Array.isArray(db[colName])) {
+      idx.rebuild(db[colName]);
+    }
+  }
+  return idx;
+}
+
+export let db = {};
+let saveTimer = null;
 const BACKUP_FILE = path.join(DATA_DIR, 'db.backup.json');
+
+// Cap ephemeral collections to prevent memory leaks under heavy usage
+const MAX_AUDIT_LOGS = 5000;
+const MAX_NOTIFICATIONS = 1000;
+
+function enforceMemoryBounds() {
+  if (Array.isArray(db.auditLogs) && db.auditLogs.length > MAX_AUDIT_LOGS) {
+    db.auditLogs.splice(0, db.auditLogs.length - MAX_AUDIT_LOGS);
+  }
+  if (Array.isArray(db.notifications) && db.notifications.length > MAX_NOTIFICATIONS) {
+    db.notifications.splice(0, db.notifications.length - MAX_NOTIFICATIONS);
+  }
+}
 
 export const saveDbSync = () => {
   try {
     if (!fs.existsSync(DATA_DIR)) {
       fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    const jsonStr = JSON.stringify(db, null, 2);
+    enforceMemoryBounds();
+    const jsonStr = JSON.stringify(db);
     fs.writeFileSync(DB_FILE, jsonStr, 'utf-8');
     if (Array.isArray(db.crmLeads) && db.crmLeads.length > 0) {
       fs.writeFileSync(BACKUP_FILE, jsonStr, 'utf-8');
@@ -466,15 +613,21 @@ export const saveDb = () => {
       if (!fs.existsSync(DATA_DIR)) {
         await fs.promises.mkdir(DATA_DIR, { recursive: true });
       }
-      const jsonStr = JSON.stringify(db, null, 2);
-      await fs.promises.writeFile(DB_FILE, jsonStr, 'utf-8');
+      enforceMemoryBounds();
+      // Minified atomic write via temporary file prevents crash corruption and reduces memory & disk IO
+      const jsonStr = JSON.stringify(db);
+      const tempFile = `${DB_FILE}.tmp`;
+      await fs.promises.writeFile(tempFile, jsonStr, 'utf-8');
+      await fs.promises.rename(tempFile, DB_FILE);
+
       if (Array.isArray(db.crmLeads) && db.crmLeads.length > 0) {
         await fs.promises.writeFile(BACKUP_FILE, jsonStr, 'utf-8');
       }
     } catch (err) {
       console.error('[FileDB] Error saving db.json async:', err);
     }
-  }, 50);
+  }, 75);
+  if (saveTimer.unref) saveTimer.unref();
 };
 
 export const loadDb = () => {
@@ -662,12 +815,13 @@ function wrapDoc(rawItem, collectionName) {
   return doc;
 }
 
-// Chainable query builder
+// Chainable query builder with .lean() and .select() acceleration
 function createQuery(getItemsFn, isSingle = false) {
   let sortCriteria = null;
   let limitNum = null;
   let skipNum = null;
   let selectedFields = null;
+  let isLean = false;
 
   const queryObj = {
     sort(criteria) {
@@ -686,14 +840,15 @@ function createQuery(getItemsFn, isSingle = false) {
       selectedFields = fields;
       return queryObj;
     },
-    lean() {
+    lean(val = true) {
+      isLean = val !== false;
       return queryObj;
     },
     populate() {
       return queryObj;
     },
     exec() {
-      let items = getItemsFn();
+      let items = getItemsFn(isLean);
       if (sortCriteria) {
         items = [...items].sort((a, b) => {
           for (const [k, dir] of Object.entries(sortCriteria)) {
@@ -714,6 +869,35 @@ function createQuery(getItemsFn, isSingle = false) {
       if (limitNum) {
         items = items.slice(0, limitNum);
       }
+
+      // Fast field projection if select was used
+      if (selectedFields) {
+        const fieldList = typeof selectedFields === 'string'
+          ? selectedFields.split(/\s+/).filter(Boolean)
+          : Object.keys(selectedFields).filter(k => selectedFields[k]);
+
+        if (fieldList.length > 0) {
+          const isExclusion = fieldList.some(f => f.startsWith('-'));
+          items = items.map(doc => {
+            const raw = isLean ? doc : (doc.toObject ? doc.toObject() : doc);
+            const proj = {};
+            if (isExclusion) {
+              const excluded = new Set(fieldList.map(f => f.replace(/^-/, '')));
+              for (const [k, v] of Object.entries(raw)) {
+                if (!excluded.has(k)) proj[k] = v;
+              }
+            } else {
+              proj.id = raw.id;
+              proj._id = raw._id;
+              for (const f of fieldList) {
+                if (raw[f] !== undefined) proj[f] = raw[f];
+              }
+            }
+            return isLean ? proj : wrapDoc(proj, 'projected');
+          });
+        }
+      }
+
       if (isSingle) {
         return items.length > 0 ? items[0] : null;
       }
@@ -735,7 +919,7 @@ function createQuery(getItemsFn, isSingle = false) {
   return queryObj;
 }
 
-// Mongoose-compatible Model Factory
+// Mongoose-compatible Model Factory with In-Memory Index Acceleration
 export function createModel(collectionName) {
   const getCollection = () => {
     if (!Array.isArray(db[collectionName])) {
@@ -747,37 +931,47 @@ export function createModel(collectionName) {
   return {
     collectionName,
     find(query = {}) {
-      return createQuery(() => {
+      return createQuery((leanMode) => {
         const arr = getCollection();
-        const matched = arr.filter(item => matchItem(item, query));
-        return matched.map(item => wrapDoc(item, collectionName));
+        const idx = getIndex(collectionName);
+        const candidates = idx.getCandidates(query, arr);
+        const matched = candidates.filter(item => matchItem(item, query));
+        return leanMode ? matched : matched.map(item => wrapDoc(item, collectionName));
       }, false);
     },
 
     findOne(query = {}) {
-      return createQuery(() => {
+      return createQuery((leanMode) => {
         const arr = getCollection();
-        const matched = arr.filter(item => matchItem(item, query));
-        return matched.map(item => wrapDoc(item, collectionName));
+        const idx = getIndex(collectionName);
+        const candidates = idx.getCandidates(query, arr);
+        const matched = candidates.filter(item => matchItem(item, query));
+        return leanMode ? matched : matched.map(item => wrapDoc(item, collectionName));
       }, true);
     },
 
     findById(id) {
-      return createQuery(() => {
-        const arr = getCollection();
-        const numId = Number(id);
-        const item = arr.find(x =>
-          x.id === id ||
-          x._id === id ||
-          (numId && !isNaN(numId) && x.id === numId) ||
-          (numId && !isNaN(numId) && Number(x.id) === numId)
-        );
-        return item ? [wrapDoc(item, collectionName)] : [];
+      return createQuery((leanMode) => {
+        const idx = getIndex(collectionName);
+        let item = idx.findById(id);
+        if (!item) {
+          const numId = Number(id);
+          if (numId && !isNaN(numId)) {
+            item = idx.findById(numId);
+          }
+        }
+        if (!item) {
+          const arr = getCollection();
+          item = arr.find(x => x.id == id || x._id == id);
+        }
+        if (!item) return [];
+        return leanMode ? [item] : [wrapDoc(item, collectionName)];
       }, true);
     },
 
     async create(data) {
       const arr = getCollection();
+      const idx = getIndex(collectionName);
       const docsToCreate = Array.isArray(data) ? data : [data];
       const createdDocs = [];
 
@@ -793,6 +987,7 @@ export function createModel(collectionName) {
           updatedAt: item.updatedAt || now
         };
         arr.push(docRecord);
+        idx.indexDoc(docRecord);
         createdDocs.push(wrapDoc(docRecord, collectionName));
       }
 
@@ -807,22 +1002,30 @@ export function createModel(collectionName) {
 
     async countDocuments(query = {}) {
       const arr = getCollection();
-      return arr.filter(item => matchItem(item, query)).length;
+      const idx = getIndex(collectionName);
+      const candidates = idx.getCandidates(query, arr);
+      return candidates.filter(item => matchItem(item, query)).length;
     },
 
     async findByIdAndUpdate(id, update, options = { new: true }) {
       const arr = getCollection();
-      const numId = Number(id);
-      const idx = arr.findIndex(x =>
-        x.id === id ||
-        x._id === id ||
-        (numId && !isNaN(numId) && x.id === numId) ||
-        (numId && !isNaN(numId) && Number(x.id) === numId)
-      );
-      if (idx === -1) return null;
-      const current = arr[idx];
+      const idx = getIndex(collectionName);
+      let existing = idx.findById(id);
+      let arrayIndex = -1;
+
+      if (existing) {
+        arrayIndex = arr.indexOf(existing);
+      } else {
+        const numId = Number(id);
+        arrayIndex = arr.findIndex(x => x.id == id || x._id == id || (numId && Number(x.id) === numId));
+      }
+
+      if (arrayIndex === -1) return null;
+      const current = arr[arrayIndex];
       const updateData = update.$set ? { ...update.$set } : { ...update };
       delete updateData.$set;
+
+      idx.unindexDoc(current);
       const updatedRecord = {
         ...current,
         ...updateData,
@@ -830,58 +1033,78 @@ export function createModel(collectionName) {
         _id: current._id,
         updatedAt: new Date().toISOString()
       };
-      arr[idx] = updatedRecord;
+      arr[arrayIndex] = updatedRecord;
+      idx.indexDoc(updatedRecord);
       saveDb();
       return wrapDoc(updatedRecord, collectionName);
     },
 
     async updateOne(query = {}, update = {}) {
       const arr = getCollection();
-      const idx = arr.findIndex(item => matchItem(item, query));
-      if (idx === -1) return { acknowledged: true, modifiedCount: 0 };
-      const current = arr[idx];
+      const idx = getIndex(collectionName);
+      const candidates = idx.getCandidates(query, arr);
+      const target = candidates.find(item => matchItem(item, query));
+      if (!target) return { acknowledged: true, modifiedCount: 0 };
+
+      const arrayIndex = arr.indexOf(target);
+      if (arrayIndex === -1) return { acknowledged: true, modifiedCount: 0 };
+
       let updateData = update.$set ? { ...update.$set } : { ...update };
       if (update.$max) {
         for (const [k, v] of Object.entries(update.$max)) {
-          if (Number(v) > (Number(current[k]) || 0)) {
+          if (Number(v) > (Number(target[k]) || 0)) {
             updateData[k] = v;
           }
         }
       }
       delete updateData.$set;
       delete updateData.$max;
+
+      idx.unindexDoc(target);
       const updatedRecord = {
-        ...current,
+        ...target,
         ...updateData,
-        id: current.id,
-        _id: current._id,
+        id: target.id,
+        _id: target._id,
         updatedAt: new Date().toISOString()
       };
-      arr[idx] = updatedRecord;
+      arr[arrayIndex] = updatedRecord;
+      idx.indexDoc(updatedRecord);
       saveDb();
       return { acknowledged: true, modifiedCount: 1 };
     },
 
     async findByIdAndDelete(id) {
       const arr = getCollection();
-      const numId = Number(id);
-      const idx = arr.findIndex(x =>
-        x.id === id ||
-        x._id === id ||
-        (numId && !isNaN(numId) && x.id === numId) ||
-        (numId && !isNaN(numId) && Number(x.id) === numId)
-      );
-      if (idx === -1) return null;
-      const removed = arr.splice(idx, 1)[0];
+      const idx = getIndex(collectionName);
+      const existing = idx.findById(id);
+      let arrayIndex = -1;
+
+      if (existing) {
+        arrayIndex = arr.indexOf(existing);
+      } else {
+        const numId = Number(id);
+        arrayIndex = arr.findIndex(x => x.id == id || x._id == id || (numId && Number(x.id) === numId));
+      }
+
+      if (arrayIndex === -1) return null;
+      const removed = arr.splice(arrayIndex, 1)[0];
+      idx.unindexDoc(removed);
       saveDb();
       return wrapDoc(removed, collectionName);
     },
 
     async deleteOne(query = {}) {
       const arr = getCollection();
-      const idx = arr.findIndex(item => matchItem(item, query));
-      if (idx !== -1) {
-        arr.splice(idx, 1);
+      const idx = getIndex(collectionName);
+      const candidates = idx.getCandidates(query, arr);
+      const target = candidates.find(item => matchItem(item, query));
+      if (!target) return { acknowledged: true, deletedCount: 0 };
+
+      const arrayIndex = arr.indexOf(target);
+      if (arrayIndex !== -1) {
+        arr.splice(arrayIndex, 1);
+        idx.unindexDoc(target);
         saveDb();
         return { acknowledged: true, deletedCount: 1 };
       }
@@ -890,9 +1113,11 @@ export function createModel(collectionName) {
 
     async deleteMany(query = {}) {
       const arr = getCollection();
+      const idx = getIndex(collectionName);
       const initialLen = arr.length;
       const remaining = arr.filter(item => !matchItem(item, query));
       db[collectionName] = createTrackedArray(remaining, () => saveDb());
+      idx.rebuild(remaining);
       saveDb();
       return { acknowledged: true, deletedCount: initialLen - remaining.length };
     }
