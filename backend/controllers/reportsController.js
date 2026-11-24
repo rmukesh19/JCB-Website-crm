@@ -1,27 +1,29 @@
 import db from '../services/memoryStore.js';
 
 export const getFinancialReport = async (req, res) => {
+  const invoices = db.invoices || [];
+  const expenses = db.expenses || [];
+  const rev = invoices.reduce((sum, i) => sum + (i.totalAmount || i.grandTotal || 0), 0);
+  const exp = expenses.reduce((sum, e) => sum + (e.amount || e.totalCost || 0), 0);
+
   res.json({
     success: true,
     data: {
-      revenue: db.invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0),
-      expenses: db.expenses.reduce((sum, e) => sum + (e.amount || 0), 0),
-      profit: db.invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0) - db.expenses.reduce((sum, e) => sum + (e.amount || 0), 0),
-      monthlyTrends: [
-        { month: 'Jan', revenue: 240000, expenses: 140000 },
-        { month: 'Feb', revenue: 310000, expenses: 165000 },
-        { month: 'Mar', revenue: 195000, expenses: 95000 }
-      ]
+      revenue: rev,
+      expenses: exp,
+      profit: rev - exp,
+      monthlyTrends: []
     }
   });
 };
 
 export const getMachineUtilizationReport = async (req, res) => {
-  const data = db.machines.map(m => ({
+  const machines = db.machines || [];
+  const data = machines.map(m => ({
     machineName: m.name,
-    registration: m.regNumber,
-    totalHours: m.currentMeterReading,
-    utilizationRate: '88%'
+    registration: m.regNumber || m.plateNumber || '',
+    totalHours: m.currentMeterReading || m.currentHours || 0,
+    utilizationRate: m.currentHours > 0 ? `${Math.min(100, Math.round((m.currentHours / 1000) * 100))}%` : '0%'
   }));
   res.json({ success: true, data });
 };
