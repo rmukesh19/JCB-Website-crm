@@ -11,10 +11,11 @@ const memoryStorage = multer.memoryStorage();
 /**
  * Allowed MIME types and extensions for Excel / CSV spreadsheets
  */
-const ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.tsv'];
+const ALLOWED_EXTENSIONS = ['.xlsx', '.xls', '.csv', '.tsv', '.ods', '.txt'];
 const ALLOWED_MIME_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
   'application/vnd.ms-excel',                                         // .xls
+  'application/vnd.oasis.opendocument.spreadsheet',                   // .ods
   'text/csv',                                                         // .csv
   'application/csv',
   'text/plain',
@@ -28,12 +29,12 @@ const ALLOWED_MIME_TYPES = [
 const fileFilter = (req, file, cb) => {
   const originalName = (file.originalname || '').toLowerCase();
   const hasValidExt = ALLOWED_EXTENSIONS.some(ext => originalName.endsWith(ext));
-  const hasValidMime = ALLOWED_MIME_TYPES.includes(file.mimetype);
+  const hasValidMime = ALLOWED_MIME_TYPES.includes(file.mimetype) || file.mimetype.includes('sheet') || file.mimetype.includes('excel') || file.mimetype.includes('csv');
 
-  if (hasValidExt || hasValidMime) {
+  if (hasValidExt || hasValidMime || !file.mimetype) {
     cb(null, true);
   } else {
-    cb(new Error(`Invalid file type (${file.mimetype}). Only Excel (.xlsx, .xls) and CSV (.csv) files are permitted.`));
+    cb(new Error(`Invalid file type (${file.mimetype}). Please upload Excel (.xlsx, .xls) or CSV (.csv, .tsv, .txt) files.`));
   }
 };
 
@@ -65,36 +66,69 @@ const COLUMN_ALIASES = {
   customername: 'customerName',
   clientname: 'customerName',
   name: 'customerName',
+  client: 'customerName',
+  customer: 'customerName',
+  lead: 'customerName',
+  leadname: 'customerName',
+  fullname: 'customerName',
+  person: 'customerName',
+  partyname: 'customerName',
+  party: 'customerName',
+  title: 'customerName',
   contactperson: 'customerName',
   companyname: 'companyName',
   company: 'companyName',
   businessname: 'companyName',
+  firm: 'companyName',
+  firmname: 'companyName',
   customertype: 'customerType',
   sector: 'customerType',
   businesstype: 'customerType',
+  type: 'customerType',
+  category: 'customerType',
+  segment: 'customerType',
   mobilenumber: 'mobileNumber',
   mobile: 'mobileNumber',
   phone: 'mobileNumber',
   phonenumber: 'mobileNumber',
+  mob: 'mobileNumber',
+  cell: 'mobileNumber',
+  cellphone: 'mobileNumber',
   contact: 'mobileNumber',
   contactnumber: 'mobileNumber',
   whatsappnumber: 'whatsAppNumber',
   whatsapp: 'whatsAppNumber',
+  whatsappno: 'whatsAppNumber',
+  wa: 'whatsAppNumber',
+  wanumber: 'whatsAppNumber',
   email: 'email',
   emailaddress: 'email',
+  mail: 'email',
   district: 'district',
   city: 'district',
+  place: 'district',
+  town: 'district',
   area: 'area',
   location: 'area',
+  site: 'area',
   address: 'address',
   interestedmachine: 'interestedMachine',
   machine: 'interestedMachine',
   machinery: 'interestedMachine',
+  machinemodel: 'interestedMachine',
+  equipment: 'interestedMachine',
+  vehicle: 'interestedMachine',
   rentalrequirement: 'rentalRequirement',
   requirement: 'rentalRequirement',
   rentaltype: 'rentalRequirement',
+  renttype: 'rentalRequirement',
   budget: 'budget',
   budgetinr: 'budget',
+  rate: 'budget',
+  amount: 'budget',
+  cost: 'budget',
+  value: 'budget',
+  price: 'budget',
   leadsource: 'leadSource',
   source: 'leadSource',
   priority: 'priority',
